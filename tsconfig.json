@@ -24,5 +24,13 @@
     "paths": {
       "@/*": ["./src/*"],
     }
-  }
+  },
+  "exclude": [
+    "api.demo-names.ts",
+    "api.demo-tq-todos.ts",
+    "demo.start.api-request.tsx",
+    "demo.start.server-funcs.tsx",
+    "demo.table.tsx",
+    "demo.tanstack-query.tsx",
+  ]
 }

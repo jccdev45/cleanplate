@@ -3,8 +3,8 @@ export interface RestaurantBase {
 	camis: string;
 	dba: string;
 	boro: string;
-	building: string;
 	street: string;
+	building?: string;
 	zipcode?: string;
 	phone?: string;
 	cuisine_description?: string;

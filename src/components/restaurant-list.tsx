@@ -12,6 +12,7 @@ export function RestaurantList({ params }: { params?: URLSearchParams }) {
 
 	return (
 		<ul>
+			Count: {data?.count}
 			{data?.restaurants.map((r) => (
 				<li key={r.camis}>{r.dba}</li>
 			))}

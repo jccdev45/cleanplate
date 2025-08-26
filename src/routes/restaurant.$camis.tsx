@@ -85,20 +85,20 @@ function RouteComponent() {
 									<CardTitle className="text-base font-bold">
 										{insp.inspection_date.slice(0, 10)}
 									</CardTitle>
-									{insp.grade && (
-										<Badge
+									<Badge
 											variant={
 												insp.grade === "A"
 													? "default"
 													: insp.grade === "B"
 														? "secondary"
-														: "destructive"
+														: insp.grade === "C"
+															? "destructive"
+															: "outline"
 											}
 											className="text-xs px-2 py-1"
 										>
-											{insp.grade}
+											{insp.grade || "N/A"}
 										</Badge>
-									)}
 								</CardHeader>
 								<CardContent>
 									<div className="mb-1 text-sm">

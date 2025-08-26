@@ -39,6 +39,7 @@ export const restaurantSearchSchema = z
 		zipcode: z.number().max(99999).optional(),
 		critical_flag: z.string().optional(),
 		dba: z.string().optional(),
+		camis: z.string().optional(),
 		$group: z.string().optional(),
 		$limit: z.number().max(10000).catch(2500).optional(),
 		$offset: z.number().catch(0).optional(),

@@ -12,3 +12,4 @@ count.txt
 todos.json
 /src/routeTree.gen.ts
 src/routes/api.demo-names.ts
+.github/copilot-profiles-general-state.json

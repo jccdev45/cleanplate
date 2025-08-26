@@ -1,0 +1,31 @@
+{
+  "pages": [
+    {
+      "profile": "development",
+      "checkedFiles": [
+        "base-instructions.md",
+        "bun-tanstack-instructions.md",
+        "ts-react-instructions.md"
+      ],
+      "instructionFiles": [
+        "base-instructions.md",
+        "bun-tanstack-instructions.md",
+        "ts-react-instructions.md"
+      ]
+    },
+    {
+      "profile": "development",
+      "checkedFiles": [
+        "base-instructions.md",
+        "bun-tanstack-instructions.md",
+        "ts-react-instructions.md"
+      ],
+      "instructionFiles": [
+        "base-instructions.md",
+        "bun-tanstack-instructions.md",
+        "ts-react-instructions.md"
+      ]
+    }
+  ],
+  "currentPage": 1
+}

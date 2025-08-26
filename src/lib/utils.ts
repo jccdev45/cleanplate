@@ -87,5 +87,12 @@ export function groupRestaurants(data: NycRawInspection[]): Restaurant[] {
 			inspection.violations.push(violation);
 		}
 	}
+	// Sort inspections by most recent date (descending)
+	for (const restaurant of restaurantsMap.values()) {
+		restaurant.inspections.sort((a, b) => {
+			// Compare as ISO date strings
+			return b.inspection_date.localeCompare(a.inspection_date);
+		});
+	}
 	return Array.from(restaurantsMap.values());
 }

@@ -10,18 +10,46 @@ import { z } from "zod";
 
 const appToken = process.env.NYC_DATA_APP_TOKEN;
 
+// This schema defines only the parameters that the Socrata API accepts.
+const apiSchema = restaurantSearchSchema.unwrap().pick({
+	$limit: true,
+	$offset: true,
+	$order: true,
+	$q: true,
+	$where: true,
+	boro: true,
+	camis: true,
+	critical_flag: true,
+	dba: true,
+	grade: true,
+	inspection_date: true,
+	score: true,
+	zipcode: true,
+});
+
 export const getRestaurantsFn = createServerFn({ method: "GET" })
-	// Accept strong params via Zod
+	// Accept strong params via Zod. This allows map-specific params to exist in the URL
 	.validator((val) => restaurantSearchSchema.parse(val))
 	.handler(async ({ data }) => {
 		const BASE_URL = "https://data.cityofnewyork.us/resource/43nn-pn8j.json";
 
+		// Parse the incoming data with the strict API schema to strip out non-API params
+		const apiParams = apiSchema.parse(data);
+
+		// Default to a high limit if none is provided to get a large dataset
+		const paramsWithLimit = { $limit: 10000, ...apiParams };
+
 		// Construct URL with query parameters
 		const url = new URL(BASE_URL);
-		if (data) {
-			url.search = new URLSearchParams(
-				data as Record<string, string>,
-			).toString();
+		// Convert all params to string before passing to URLSearchParams
+		const stringifiedParams = Object.fromEntries(
+			Object.entries(paramsWithLimit).map(([key, value]) => {
+				if (value === undefined) return [key, ""];
+				return [key, String(value)];
+			}),
+		);
+		if (stringifiedParams) {
+			url.search = new URLSearchParams(stringifiedParams).toString();
 		}
 
 		const response = await fetch(url.toString(), {

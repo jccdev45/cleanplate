@@ -1,3 +1,6 @@
+// TODO: Add filter controls for inspections (date sorting, grade filter)
+// TODO: Add sticky header for restaurant info? Maybe
+
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -86,25 +89,30 @@ function RouteComponent() {
 										{insp.inspection_date.slice(0, 10)}
 									</CardTitle>
 									<Badge
-											variant={
-												insp.grade === "A"
-													? "default"
-													: insp.grade === "B"
-														? "secondary"
-														: insp.grade === "C"
-															? "destructive"
-															: "outline"
-											}
-											className="text-xs px-2 py-1"
-										>
-											{insp.grade || "N/A"}
-										</Badge>
+										variant={
+											insp.grade === "A"
+												? "default"
+												: insp.grade === "B"
+													? "secondary"
+													: insp.grade === "C"
+														? "destructive"
+														: "outline"
+										}
+										className="text-xs px-2 py-1"
+									>
+										{insp.grade || "N/A"}
+									</Badge>
 								</CardHeader>
 								<CardContent>
 									<div className="mb-1 text-sm">
 										<span className="font-medium">Score:</span>{" "}
 										{insp.score ?? "N/A"}
 									</div>
+									{insp.action && (
+										<div className="mt-2 text-xs text-muted-foreground">
+											<span className="font-medium">Action:</span> {insp.action}
+										</div>
+									)}
 									{insp.violations.length > 0 && (
 										<div className="mt-2">
 											<span className="font-medium">Violations:</span>
@@ -121,11 +129,6 @@ function RouteComponent() {
 													</li>
 												))}
 											</ul>
-										</div>
-									)}
-									{insp.action && (
-										<div className="mt-2 text-xs text-muted-foreground">
-											<span className="font-medium">Action:</span> {insp.action}
 										</div>
 									)}
 								</CardContent>

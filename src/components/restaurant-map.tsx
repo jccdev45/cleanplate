@@ -1,3 +1,4 @@
+import { useSearch } from "@tanstack/react-router";
 import L from "leaflet";
 import { MapContainer, Marker, Popup, TileLayer } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
@@ -12,8 +13,15 @@ interface RestaurantMapProps {
 }
 
 export function RestaurantMap({ restaurants }: RestaurantMapProps) {
+	const searchParams = useSearch({ from: "/map" });
+	console.log("🚀 ~ RestaurantMap ~ searchParams:", searchParams);
+
 	// Default NYC center
-	const position = [40.73229776539821, -73.90569900252457];
+	const position: [number, number] = [
+		searchParams?.latitude || 40.73229776539821,
+		searchParams?.longitude || -73.90569900252457,
+	];
+	const mapZoom = searchParams?.zoom || 11.5;
 
 	// Custom marker icon for better visibility
 	const markerIcon = L.icon({
@@ -40,8 +48,9 @@ export function RestaurantMap({ restaurants }: RestaurantMapProps) {
 
 	return (
 		<MapContainer
+			key={`${position[0]}-${position[1]}-${mapZoom}`}
 			center={position as L.LatLngTuple}
-			zoom={11.5}
+			zoom={mapZoom}
 			scrollWheelZoom={true}
 			className="w-full h-full rounded-lg shadow-lg"
 			style={{ minHeight: "60vh", maxHeight: "80vh" }}

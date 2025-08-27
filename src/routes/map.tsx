@@ -1,6 +1,6 @@
 import { MapFilters } from "@/components/map-filters";
 import { RestaurantMap } from "@/components/restaurant-map";
-import { restaurantSearchSchema } from "@/schema/schema";
+import { restaurantSearchParamsSchema } from "@/schema/schema";
 import { restaurantQueries } from "@/utils/restaurant";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, useSearch } from "@tanstack/react-router";
@@ -8,7 +8,7 @@ import { Loader2 } from "lucide-react";
 
 export const Route = createFileRoute("/map")({
 	component: MapPage,
-	validateSearch: (search) => restaurantSearchSchema.parse(search),
+	validateSearch: (search) => restaurantSearchParamsSchema.parse(search),
 	ssr: "data-only",
 });
 

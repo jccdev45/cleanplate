@@ -1,17 +1,17 @@
 import { groupRestaurants } from "@/lib/utils";
 import {
+	type RestaurantRaw,
 	type RestaurantSearchParams,
-	nycRawInspectionSchema,
-	restaurantSearchSchema,
+	restaurantApiResponseSchema,
+	restaurantSearchParamsSchema,
 } from "@/schema/schema";
 import { queryOptions } from "@tanstack/react-query";
 import { createServerFn } from "@tanstack/react-start";
-import { z } from "zod";
 
 const appToken = process.env.NYC_DATA_APP_TOKEN;
 
 // This schema defines only the parameters that the Socrata API accepts.
-const apiSchema = restaurantSearchSchema.unwrap().pick({
+const apiSchema = restaurantSearchParamsSchema.pick({
 	$limit: true,
 	$offset: true,
 	$order: true,
@@ -29,7 +29,7 @@ const apiSchema = restaurantSearchSchema.unwrap().pick({
 
 export const getRestaurantsFn = createServerFn({ method: "GET" })
 	// Accept strong params via Zod. This allows map-specific params to exist in the URL
-	.validator((val) => restaurantSearchSchema.parse(val))
+	.validator((val) => restaurantSearchParamsSchema.parse(val))
 	.handler(async ({ data }) => {
 		const BASE_URL = "https://data.cityofnewyork.us/resource/43nn-pn8j.json";
 
@@ -60,8 +60,15 @@ export const getRestaurantsFn = createServerFn({ method: "GET" })
 		});
 		const result = await response.json();
 
-		// Validate every row
-		const rawRows = z.array(nycRawInspectionSchema).parse(result);
+		// Validate API response is an array of restaurant objects
+		let rawRows: RestaurantRaw[];
+		try {
+			rawRows = restaurantApiResponseSchema.parse(result);
+		} catch (err) {
+			throw new Error(
+				"API response was not an array of restaurant objects. Check Socrata API and schema.",
+			);
+		}
 		// Transform/group
 		const restaurants = groupRestaurants(rawRows);
 

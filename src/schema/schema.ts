@@ -1,6 +1,7 @@
 import { z } from "zod";
 
-export const nycRawInspectionSchema = z.object({
+// Main restaurant/inspection row schema
+export const restaurantRawSchema = z.object({
 	camis: z.string(),
 	dba: z.string(),
 	boro: z.string(),
@@ -31,27 +32,31 @@ export const nycRawInspectionSchema = z.object({
 	inspection_type: z.string().optional(),
 });
 
-export const restaurantSearchSchema = z
-	.object({
-		score: z.number().min(0).max(100).optional(),
-		grade: z.string().optional(),
-		inspection_date: z.iso.datetime().optional(),
-		zipcode: z.number().max(99999).optional(),
-		critical_flag: z.string().optional(),
-		dba: z.string().optional(),
-		camis: z.string().optional(),
-		latitude: z.number().optional(),
-		longitude: z.number().optional(),
-		boro: z.string().optional(),
-		zoom: z.number().min(0).max(22).optional(),
-		$group: z.string().optional(),
-		$limit: z.number().max(10000).catch(2500).optional(),
-		$offset: z.number().catch(0).optional(),
-		$q: z.string().optional(),
-		$order: z.string().catch("inspection_date DESC").optional(),
-		$where: z.string().optional(),
-	})
-	.optional();
+// Search params schema, matches Socrata API param names
+export const restaurantSearchParamsSchema = z.object({
+	score: z.number().min(0).max(100).optional(),
+	grade: z.string().optional(),
+	inspection_date: z.string().optional(),
+	zipcode: z.number().max(99999).optional(),
+	critical_flag: z.string().optional(),
+	dba: z.string().optional(),
+	camis: z.string().optional(),
+	latitude: z.number().optional(),
+	longitude: z.number().optional(),
+	boro: z.string().optional(),
+	zoom: z.number().min(0).max(22).optional(),
+	$group: z.string().optional(),
+	$limit: z.number().max(10000).default(2500).optional(),
+	$offset: z.number().default(0).optional(),
+	$q: z.string().optional(),
+	$order: z.string().default("inspection_date DESC").optional(),
+	$where: z.string().optional(),
+});
 
-export type RestaurantSearchParams = z.infer<typeof restaurantSearchSchema>;
-export type NycRawInspection = z.infer<typeof nycRawInspectionSchema>;
+// API response schema: always an array of restaurant objects
+export const restaurantApiResponseSchema = z.array(restaurantRawSchema);
+
+export type RestaurantSearchParams = z.infer<
+	typeof restaurantSearchParamsSchema
+>;
+export type RestaurantRaw = z.infer<typeof restaurantRawSchema>;

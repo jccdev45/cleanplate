@@ -1,4 +1,4 @@
-import type { NycRawInspection } from "@/schema/schema";
+import type { RestaurantRaw } from "@/schema/schema";
 import type { Restaurant, Violation } from "@/types/restaurant";
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
@@ -14,7 +14,7 @@ export function generateInspectionId(
 	return `${camis}-${inspection_date}`;
 }
 
-export function groupRestaurants(data: NycRawInspection[]): Restaurant[] {
+export function groupRestaurants(data: RestaurantRaw[]): Restaurant[] {
 	const restaurantsMap = new Map<string, Restaurant>();
 
 	for (const row of data) {

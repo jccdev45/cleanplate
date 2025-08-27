@@ -37,7 +37,7 @@ export const getRestaurantsFn = createServerFn({ method: "GET" })
 		const apiParams = apiSchema.parse(data);
 
 		// Default to a high limit if none is provided to get a large dataset
-		const paramsWithLimit = { $limit: 5000, ...apiParams };
+		const paramsWithLimit = { $limit: 10000, ...apiParams };
 
 		// Construct URL with query parameters
 		const url = new URL(BASE_URL);

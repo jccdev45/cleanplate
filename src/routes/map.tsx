@@ -14,7 +14,7 @@ export const Route = createFileRoute("/map")({
 
 function MapPage() {
 	const searchParams = useSearch({ from: "/map" });
-	const { data, isLoading, isFetching, error } = useQuery(
+	const { data, error, isFetching, isLoading } = useQuery(
 		restaurantQueries.list(searchParams),
 	);
 
@@ -27,21 +27,23 @@ function MapPage() {
 			<main className="flex-grow relative">
 				{/* Initial Load: Full overlay */}
 				{isLoading && (
-					<div className="absolute inset-0 bg-white/70 z-50 flex items-center justify-center">
-						<Loader2 className="h-8 w-8 animate-spin text-primary" />
+					<div className="absolute inset-0 size-full bg-white/70 z-50 flex items-center justify-center">
+						<Loader2 className="size-12 animate-spin text-primary" />
 					</div>
 				)}
 
 				{/* Refetching: Subtle indicator */}
 				{isFetching && !isLoading && (
 					<div className="absolute top-4 right-4 z-50 bg-white/80 p-2 rounded-full shadow-lg">
-						<Loader2 className="h-6 w-6 animate-spin text-primary" />
+						<Loader2 className="size-6 animate-spin text-primary" />
 					</div>
 				)}
 
 				{error && (
-					<div className="absolute inset-0 bg-white/50 z-50 flex items-center justify-center text-red-600">
-						Error loading map data
+					<div className="absolute inset-0 bg-white/50 z-50 flex items-center justify-center">
+						<span className="bg-destructive/60 p-2 rounded text-destructive-foreground">
+							Error loading map data
+						</span>
 					</div>
 				)}
 				<RestaurantMap restaurants={data?.restaurants || []} />

@@ -37,7 +37,7 @@ export const getRestaurantsFn = createServerFn({ method: "GET" })
 		const apiParams = apiSchema.parse(data);
 
 		// Default to a high limit if none is provided to get a large dataset
-		const paramsWithLimit = { $limit: 10000, ...apiParams };
+		const paramsWithLimit = { $limit: 5000, ...apiParams };
 
 		// Construct URL with query parameters
 		const url = new URL(BASE_URL);
@@ -80,12 +80,18 @@ export const restaurantQueries = {
 		return queryOptions({
 			queryKey: ["restaurants", params],
 			queryFn: () => getRestaurantsFn({ data: params }),
+			staleTime: 1000 * 60 * 60 * 6, // 6 hours
+			gcTime: 1000 * 60 * 60 * 12, // 12 hours
+			refetchOnWindowFocus: false,
 		});
 	},
 	detail: (camis: string) => {
 		return queryOptions({
 			queryKey: ["restaurants", "detail", camis],
 			queryFn: () => getRestaurantsFn({ data: { camis } }),
+			staleTime: 1000 * 60 * 60 * 1, // 1 hours
+			gcTime: 1000 * 60 * 60 * 2, // 2 hours
+			refetchOnWindowFocus: false,
 		});
 	},
 };

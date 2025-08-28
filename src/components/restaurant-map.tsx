@@ -14,7 +14,6 @@ interface RestaurantMapProps {
 
 export function RestaurantMap({ restaurants }: RestaurantMapProps) {
 	const searchParams = useSearch({ from: "/map" });
-	console.log("🚀 ~ RestaurantMap ~ searchParams:", searchParams);
 
 	// Default NYC center
 	const position: [number, number] = [
@@ -52,7 +51,7 @@ export function RestaurantMap({ restaurants }: RestaurantMapProps) {
 			center={position as L.LatLngTuple}
 			zoom={mapZoom}
 			scrollWheelZoom={true}
-			className="w-full h-full rounded-lg shadow-lg"
+			className="w-full h-full rounded-lg shadow-lg z-0"
 			style={{ minHeight: "60vh", maxHeight: "80vh" }}
 		>
 			<TileLayer

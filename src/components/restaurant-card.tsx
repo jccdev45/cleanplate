@@ -1,3 +1,4 @@
+import { Badge } from "@/components/ui/badge";
 import {
 	Card,
 	CardContent,
@@ -8,7 +9,6 @@ import {
 } from "@/components/ui/card";
 import type { Restaurant } from "@/types/restaurant";
 import { Link } from "@tanstack/react-router";
-import { Badge } from "./ui/badge";
 
 export function RestaurantCard({ restaurant }: { restaurant: Restaurant }) {
 	const latestInspection = restaurant.inspections[0];

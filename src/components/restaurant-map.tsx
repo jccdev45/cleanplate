@@ -80,6 +80,7 @@ export function RestaurantMap({ restaurants }: RestaurantMapProps) {
 								Number.parseFloat(r.longitude ?? "0"),
 							]}
 							icon={markerIcon}
+							alt={r.dba}
 						>
 							<Popup>
 								<div className="font-bold text-base mb-1">{r.dba}</div>

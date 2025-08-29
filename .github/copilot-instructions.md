@@ -138,6 +138,7 @@ Apply the [General Coding Standards](./base-instructions.md) to all code.
 - Use `function` keyword for pure utility functions.
 - Use **arrow functions** for callbacks and handlers.
 - Keep JSX concise and declarative; avoid deeply nested conditionals.
+- Always use semantic HTML in JSX, only use div if no semantic alternative exists.
 - Use ternaries or `&&` for conditional rendering.
 - Minimize `useEffect` — prefer derived state or server-driven logic.
 - Use React 18 concurrent features (`useTransition`, `useDeferredValue`) when appropriate.
@@ -183,6 +184,8 @@ Apply the [General Coding Standards](./base-instructions.md) to all code.
 - Use Radix UI/shadcn/ui for accessible primitives.
 - Co-locate minimal styles with components.
 - Prefer responsive, mobile-first styles.
+- Set element spacing in a parent element, do not ever include things like `<div className="mt-4" />`.
+- Ensure code readability/maintainability with styling.
 
 ## Performance
 

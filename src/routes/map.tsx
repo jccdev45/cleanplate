@@ -20,10 +20,15 @@ function MapPage() {
 
 	return (
 		<div className="flex flex-col h-[calc(100vh-64px)]">
-			<MapFilters />
-			<h1 className="text-xl font-bold text-center p-2">
-				Displaying {data?.count ?? 0} results
-			</h1>
+			<div className="flex items-center px-4">
+				<MapFilters />
+				<div className="flex flex-col flex-1 text-center p-2">
+					<h1 className="text-xl font-bold mb-2">
+						Displaying {data?.count ?? 0} results
+					</h1>
+					<AppliedFilters searchParams={searchParams} />
+				</div>
+			</div>
 			<main className="flex-grow relative">
 				{/* Initial Load: Full overlay */}
 				{isLoading && (
@@ -50,4 +55,62 @@ function MapPage() {
 			</main>
 		</div>
 	);
+	// AppliedFilters component displays a summary of active filters
+	function AppliedFilters({
+		searchParams,
+	}: { searchParams: Record<string, unknown> }) {
+		const filters: Array<{ label: string; value: string }> = [];
+
+		if (searchParams?.$q)
+			filters.push({ label: "Search", value: String(searchParams.$q) });
+		if (searchParams?.grade)
+			filters.push({ label: "Grade", value: String(searchParams.grade) });
+		if (searchParams?.$limit)
+			filters.push({ label: "Limit", value: String(searchParams.$limit) });
+		if (searchParams?.boro)
+			filters.push({ label: "Borough", value: String(searchParams.boro) });
+		if (searchParams?.$order) {
+			const orderValue = String(searchParams.$order);
+			const readableOrder =
+				orderValue === "inspection_date DESC"
+					? "Newest"
+					: orderValue === "inspection_date ASC"
+						? "Oldest"
+						: orderValue;
+			filters.push({
+				label: "Sort by",
+				value: readableOrder,
+			});
+		}
+		if (searchParams?.critical_flag) {
+			filters.push({
+				label: "Critical Flag",
+				value: String(searchParams.critical_flag),
+			});
+		}
+
+		if (filters.length === 0) {
+			return (
+				<span className="text-muted-foreground text-sm">
+					No filters applied
+				</span>
+			);
+		}
+
+		return (
+			<div className="flex flex-wrap gap-2 justify-center text-sm">
+				{filters.map((f) => (
+					<span
+						key={f.label}
+						className="px-2 py-1 rounded bg-accent text-accent-foreground"
+					>
+						{f.label}:{" "}
+						<span className="font-semibold text-primary-foreground">
+							{f.value}
+						</span>
+					</span>
+				))}
+			</div>
+		);
+	}
 }

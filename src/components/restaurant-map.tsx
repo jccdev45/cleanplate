@@ -93,20 +93,31 @@ export function RestaurantMap({ restaurants }: RestaurantMapProps) {
 										No inspections found.
 									</div>
 								) : (
-									<Badge
-										variant={
-											r.inspections[0]?.grade === "A"
-												? "default"
-												: r.inspections[0]?.grade === "B"
-													? "secondary"
-													: r.inspections[0]?.grade === "C"
-														? "destructive"
-														: "outline"
-										}
-										className="text-xs px-2 py-1"
-									>
-										Grade: {r.inspections[0]?.grade || "N/A"}
-									</Badge>
+									<div className="flex items-center gap-2">
+										<Badge
+											variant={
+												r.inspections[0]?.grade === "A"
+													? "default"
+													: r.inspections[0]?.grade === "B"
+														? "secondary"
+														: r.inspections[0]?.grade === "C"
+															? "destructive"
+															: "outline"
+											}
+											className="text-xs px-2 py-1"
+										>
+											Grade: {r.inspections[0]?.grade || "N/A"}
+										</Badge>
+										<Badge
+											variant={
+												r.inspections[0]?.critical_flag === "Critical"
+													? "destructive"
+													: "default"
+											}
+										>
+											{r.inspections[0]?.critical_flag || "N/A"}
+										</Badge>
+									</div>
 								)}
 								<div className="text-xs">
 									{r.building} {r.street},

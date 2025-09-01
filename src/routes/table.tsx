@@ -1,3 +1,4 @@
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -8,17 +9,25 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipProvider,
+	TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { restaurantSearchParamsSchema } from "@/schema/schema";
 import type { Restaurant } from "@/types/restaurant";
 import { restaurantQueries } from "@/utils/restaurant";
 import { rankItem } from "@tanstack/match-sorter-utils";
 import { useQuery } from "@tanstack/react-query";
 import {
+	Link,
 	createFileRoute,
 	useNavigate,
 	useSearch,
 } from "@tanstack/react-router";
 import type {
+	Column,
 	ColumnDef,
 	ColumnFiltersState,
 	FilterFn,
@@ -32,6 +41,16 @@ import {
 	useReactTable,
 } from "@tanstack/react-table";
 import { useVirtualizer } from "@tanstack/react-virtual";
+import {
+	AlertCircleIcon,
+	ArrowUpDown,
+	ChevronDown,
+	ChevronLeft,
+	ChevronRight,
+	ChevronUp,
+	ChevronsLeft,
+	ChevronsRight,
+} from "lucide-react";
 import React from "react";
 
 export const Route = createFileRoute("/table")({
@@ -53,38 +72,102 @@ function TableRoute() {
 		searchParams?.$q || "",
 	);
 
-	const queryKey = React.useMemo(
-		() => ["restaurants", searchParams],
-		[searchParams],
+	const { data, error, isFetching } = useQuery(
+		restaurantQueries.list(searchParams),
 	);
-	const { data, error, isFetching } = useQuery({
-		queryKey,
-		queryFn: async (ctx) => {
-			const queryObj = restaurantQueries.list(searchParams);
-			if (typeof queryObj.queryFn === "function") {
-				const result = await queryObj.queryFn(ctx);
-				return result;
-			}
-			return { restaurants: [] };
-		},
-		staleTime: 60_000,
-		refetchOnWindowFocus: false,
-		refetchInterval: 120_000,
-	});
 
 	const restaurants: Restaurant[] = data?.restaurants ?? [];
+	const totalCount = data?.count ?? 0;
 
 	const columns = React.useMemo<ColumnDef<Restaurant, unknown>[]>(
 		() => [
-			{ accessorKey: "camis", header: "ID" },
-			{ accessorKey: "dba", header: "Name" },
-			{ accessorKey: "boro", header: "Borough" },
-			{ accessorKey: "cuisine_description", header: "Cuisine" },
+			{
+				accessorKey: "dba",
+				header: ({ column }) => (
+					<SortableHeader column={column}>Name</SortableHeader>
+				),
+				cell: ({ row, getValue }) => (
+					<Link
+						to="/restaurant/$camis"
+						params={{ camis: row.original.camis }}
+						className="font-semibold text-blue-600 hover:underline"
+					>
+						{getValue() as string}
+					</Link>
+				),
+				enablePinning: true,
+			},
+			{
+				accessorKey: "address",
+				header: "Address",
+				cell: ({ row }) =>
+					`${row.original.building || ""} ${row.original.street || ""}`,
+			},
+			{
+				accessorKey: "zipcode",
+				header: ({ column }) => (
+					<SortableHeader column={column}>Zipcode</SortableHeader>
+				),
+				size: 80,
+			},
+			{
+				accessorKey: "boro",
+				header: ({ column }) => (
+					<SortableHeader column={column}>Borough</SortableHeader>
+				),
+				size: 100,
+			},
+			{
+				accessorKey: "cuisine_description",
+				header: ({ column }) => (
+					<SortableHeader column={column}>Cuisine</SortableHeader>
+				),
+			},
 			{
 				accessorKey: "grade",
-				header: "Grade",
+				header: ({ column }) => (
+					<SortableHeader column={column}>Grade</SortableHeader>
+				),
 				accessorFn: (row) => row.inspections[0]?.grade,
 				cell: ({ getValue }) => getValue() ?? "N/A",
+				size: 80,
+			},
+			{
+				accessorKey: "violation_description",
+				header: "Violation",
+				accessorFn: (row) =>
+					row.inspections[0]?.violations
+						.map((v) => v.violation_description)
+						.join(", "),
+				cell: ({ row, getValue }) => {
+					const value = getValue<string>();
+					if (!value) return "N/A";
+					return (
+						<TooltipProvider>
+							<Tooltip>
+								<TooltipTrigger className="truncate">
+									{value.substring(0, 50)}...
+								</TooltipTrigger>
+								<TooltipContent className="max-w-sm whitespace-normal break-words">
+									{value.length > 200 ? (
+										<>
+											{value.substring(0, 200)}...
+											<Link
+												to="/restaurant/$camis"
+												params={{ camis: row.original.camis }}
+												className="text-secondary hover:underline block ml-auto font-bold w-fit"
+											>
+												See More
+											</Link>
+										</>
+									) : (
+										value
+									)}
+								</TooltipContent>
+							</Tooltip>
+						</TooltipProvider>
+					);
+				},
 			},
 		],
 		[],
@@ -100,6 +183,7 @@ function TableRoute() {
 		data: restaurants,
 		columns,
 		filterFns: { fuzzy: fuzzyFilter },
+		enablePinning: true,
 		state: {
 			columnFilters,
 			globalFilter,
@@ -152,6 +236,15 @@ function TableRoute() {
 
 	return (
 		<div className="min-h-screen p-6 space-y-2">
+			<Alert>
+				<AlertCircleIcon />
+				<AlertTitle>Heads up!</AlertTitle>
+				<AlertDescription>
+					Response times may be slow due to API restraints, large limits make it
+					worse and that limit only applies to the raw API data and the actual
+					count is lower because of data consolidation.
+				</AlertDescription>
+			</Alert>
 			<Input
 				value={globalFilter ?? ""}
 				onChange={(e) => setGlobalFilter(e.target.value)}
@@ -176,38 +269,23 @@ function TableRoute() {
 										<th
 											key={header.id}
 											colSpan={header.colSpan}
+											className={
+												header.column.getIsPinned()
+													? "sticky left-0 bg-white"
+													: ""
+											}
 											style={{
 												width: header.getSize(),
 												textAlign: "left",
 												padding: "0.75rem 1rem",
 											}}
 										>
-											{header.isPlaceholder ? null : (
-												<>
-													<div
-														{...{
-															className: header.column.getCanSort()
-																? "cursor-pointer select-none"
-																: "",
-															onClick: header.column.getToggleSortingHandler(),
-														}}
-													>
-														{flexRender(
-															header.column.columnDef.header,
-															header.getContext(),
-														)}
-														{{
-															asc: " 🔼",
-															desc: " 🔽",
-														}[header.column.getIsSorted() as string] ?? null}
-													</div>
-													{header.column.getCanFilter() ? (
-														<div className="mt-2">
-															<Filter column={header.column} />
-														</div>
-													) : null}
-												</>
-											)}
+											{header.isPlaceholder
+												? null
+												: flexRender(
+														header.column.columnDef.header,
+														header.getContext(),
+													)}
 										</th>
 									))}
 								</tr>
@@ -243,7 +321,15 @@ function TableRoute() {
 												style={{ height: `${virtualRow.size}px` }}
 											>
 												{row.getVisibleCells().map((cell) => (
-													<td key={cell.id} style={{ padding: "0.75rem 1rem" }}>
+													<td
+														key={cell.id}
+														className={
+															cell.column.getIsPinned()
+																? "sticky left-0 bg-white"
+																: ""
+														}
+														style={{ padding: "0.75rem 1rem" }}
+													>
 														{flexRender(
 															cell.column.columnDef.cell,
 															cell.getContext(),
@@ -274,7 +360,7 @@ function TableRoute() {
 					onClick={() => handlePageChange(0)}
 					disabled={!table.getCanPreviousPage()}
 				>
-					{"<<"}
+					<ChevronsLeft className="w-4 h-4" />
 				</Button>
 				<Button
 					variant="outline"
@@ -282,7 +368,7 @@ function TableRoute() {
 					onClick={() => handlePageChange(pageIndex - 1)}
 					disabled={!table.getCanPreviousPage()}
 				>
-					{"<"}
+					<ChevronLeft className="w-4 h-4" />
 				</Button>
 				<Button
 					variant="outline"
@@ -290,7 +376,7 @@ function TableRoute() {
 					onClick={() => handlePageChange(pageIndex + 1)}
 					disabled={!table.getCanNextPage()}
 				>
-					{">"}
+					<ChevronRight className="w-4 h-4" />
 				</Button>
 				<Button
 					variant="outline"
@@ -298,7 +384,7 @@ function TableRoute() {
 					onClick={() => handlePageChange(table.getPageCount() - 1)}
 					disabled={!table.getCanNextPage()}
 				>
-					{">>"}
+					<ChevronsRight className="w-4 h-4" />
 				</Button>
 				<span className="flex items-center gap-1">
 					<div>Page</div>
@@ -329,30 +415,68 @@ function TableRoute() {
 						))}
 					</SelectContent>
 				</Select>
+				<div className="flex items-center gap-1">
+					Displaying
+					<strong>{rows.length}</strong>
+					of
+					<strong>{totalCount}</strong>
+					Results
+				</div>
 			</div>
 		</div>
 	);
 }
 
-function Filter({
+function SortableHeader({
+	children,
 	column,
 }: {
-	column: ColumnDef<Restaurant, unknown> & {
-		getFilterValue: () => unknown;
-		setFilterValue: (v: unknown) => void;
-	};
+	children: React.ReactNode;
+	column: Column<Restaurant, unknown>;
 }) {
-	const columnFilterValue = column.getFilterValue();
+	const sorted = column.getIsSorted();
 	return (
-		<Input
-			type="text"
-			value={(columnFilterValue ?? "") as string}
-			onChange={(e) => column.setFilterValue(e.target.value)}
-			placeholder="Search..."
-			className="w-full"
-		/>
+		<Button
+			onClick={() => column.toggleSorting(sorted === "asc")}
+			onKeyDown={(e) => {
+				if (e.key === "Enter") {
+					column.toggleSorting(sorted === "asc");
+				}
+			}}
+			variant="ghost"
+			size="sm"
+		>
+			{children}
+			{sorted === "desc" ? (
+				<ChevronDown className="w-4 h-4" />
+			) : sorted === "asc" ? (
+				<ChevronUp className="w-4 h-4" />
+			) : (
+				<ArrowUpDown className="w-4 h-4 text-muted" />
+			)}
+		</Button>
 	);
 }
+
+// function Filter({
+// 	column,
+// }: {
+// 	column: ColumnDef<Restaurant, unknown> & {
+// 		getFilterValue: () => unknown;
+// 		setFilterValue: (v: unknown) => void;
+// 	};
+// }) {
+// 	const columnFilterValue = column.getFilterValue();
+// 	return (
+// 		<Input
+// 			type="text"
+// 			value={(columnFilterValue ?? "") as string}
+// 			onChange={(e) => column.setFilterValue(e.target.value)}
+// 			placeholder="Search..."
+// 			className="w-full"
+// 		/>
+// 	);
+// }
 
 function GoToPageInput({
 	pageIndex,

@@ -8,7 +8,7 @@ import {
 import { queryOptions } from "@tanstack/react-query";
 import { createServerFn } from "@tanstack/react-start";
 
-const appToken = process.env.NYC_DATA_APP_TOKEN;
+const appToken = process.env.RESTAURANT_API_APP_TOKEN;
 
 // This schema defines only the parameters that the Socrata API accepts.
 const apiSchema = restaurantSearchParamsSchema.pick({

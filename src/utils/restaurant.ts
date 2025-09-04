@@ -76,7 +76,7 @@ export const getRestaurantsFn = createServerFn({ method: "GET" })
 	});
 
 export const restaurantQueries = {
-	list: (params: RestaurantSearchParams) => {
+	list: (params?: RestaurantSearchParams) => {
 		return queryOptions({
 			queryKey: ["restaurants", params],
 			queryFn: () => getRestaurantsFn({ data: params }),

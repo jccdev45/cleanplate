@@ -46,7 +46,7 @@ export const restaurantSearchParamsSchema = z.object({
 	boro: z.string().optional(),
 	zoom: z.number().min(0).max(22).optional(),
 	$group: z.string().optional(),
-	$limit: z.number().max(10000).optional(),
+	$limit: z.number().max(10000).default(5000).optional(),
 	$offset: z.number().default(0).optional(),
 	$q: z.string().optional(),
 	$order: z.string().default("inspection_date DESC").optional(),

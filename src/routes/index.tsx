@@ -1,10 +1,51 @@
 import { TopRestaurants } from "@/components/top-restaurants";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { WorstRestaurants } from "@/components/worst-restaurants";
-import { createFileRoute } from "@tanstack/react-router";
+import { restaurantQueries } from "@/utils/restaurant";
+import {
+	ErrorComponent,
+	type ErrorComponentProps,
+	createFileRoute,
+} from "@tanstack/react-router";
 
 export const Route = createFileRoute("/")({
+	loader: async ({ context }) => {
+		const topRestaurants = await context.queryClient.ensureQueryData(
+			restaurantQueries.list({
+				grade: "A",
+				$limit: 6,
+				$order: "inspection_date DESC",
+				$where: "grade = 'A'",
+			}),
+		);
+		const worstRestaurants = await context.queryClient.ensureQueryData(
+			restaurantQueries.list({
+				$limit: 50,
+				$order: "score DESC",
+				$where: "score > 13 AND inspection_date > '2025-01-01'",
+			}),
+		);
+
+		return {
+			top: topRestaurants.restaurants,
+			worst: worstRestaurants.restaurants,
+		};
+	},
 	component: App,
+	errorComponent: IndexErrorComponent,
+	notFoundComponent: () => (
+		<Alert>
+			<AlertTitle>Not Found</AlertTitle>
+			<AlertDescription>
+				Something wasn't found, please try again
+			</AlertDescription>
+		</Alert>
+	),
 });
+
+function IndexErrorComponent({ error }: ErrorComponentProps) {
+	return <ErrorComponent error={error} />;
+}
 
 function App() {
 	return (

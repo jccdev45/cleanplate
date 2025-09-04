@@ -1,19 +1,24 @@
 // TODO: Add filter controls for inspections (date sorting, grade filter)
 // TODO: Add sticky header for restaurant info? Maybe
 
-import { Badge } from "@/components/ui/badge";
+import { Badge, badgeVariants } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { restaurantQueries } from "@/utils/restaurant";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
+import { Link, createFileRoute } from "@tanstack/react-router";
+import { MapPinned } from "lucide-react";
 
 export const Route = createFileRoute("/restaurant/$camis")({
 	component: RouteComponent,
 	loader: ({ context: { queryClient }, params: { camis } }) => {
 		return queryClient.ensureQueryData(restaurantQueries.detail(camis));
 	},
+	head: ({ loaderData }) => ({
+		meta: loaderData ? [{ title: loaderData.restaurants[0].dba }] : undefined,
+	}),
 });
 
 function RouteComponent() {
@@ -28,10 +33,10 @@ function RouteComponent() {
 	}
 
 	return (
-		<main className="flex flex-col items-center px-4 py-6 max-w-2xl mx-auto animate-fade-in">
+		<main className="flex flex-col items-center px-4 py-6 max-w-2xl mx-auto animate-in fade-in-0 duration-700">
 			<Card className="w-full mb-6 shadow-lg border-2 border-primary/20">
 				<CardHeader>
-					<CardTitle className="text-2xl font-bold text-primary mb-2 animate-slide-down">
+					<CardTitle className="text-2xl font-bold text-primary mb-2 animate-in slide-in-from-top-5 duration-500 ease-[cubic-bezier(.4,2,.3,1)]">
 						{restaurant.dba}
 					</CardTitle>
 					<div className="flex flex-wrap gap-2 items-center">
@@ -42,7 +47,8 @@ function RouteComponent() {
 				<CardContent>
 					<div className="mb-2 text-sm text-muted-foreground">
 						<span>
-							{restaurant.building} {restaurant.street}, {restaurant.zipcode}
+							{restaurant.building} {restaurant.street}, {restaurant.boro}{" "}
+							{restaurant.zipcode}
 						</span>
 					</div>
 					{restaurant.phone && (
@@ -52,14 +58,21 @@ function RouteComponent() {
 					)}
 					<div className="flex gap-4 mt-2">
 						{restaurant.latitude && restaurant.longitude && (
-							<a
-								href={`https://maps.google.com/?q=${restaurant.latitude},${restaurant.longitude}`}
-								target="_blank"
-								rel="noopener noreferrer"
-								className="text-blue-600 underline text-xs"
-							>
-								View on Map
-							</a>
+							<Button asChild>
+								<Link
+									to="/map"
+									target="_blank"
+									search={{
+										latitude: Number(restaurant.latitude),
+										longitude: Number(restaurant.longitude),
+										camis: restaurant.camis,
+										zoom: 15,
+									}}
+								>
+									<MapPinned className="size-5" />
+									View on Map
+								</Link>
+							</Button>
 						)}
 					</div>
 				</CardContent>
@@ -75,12 +88,12 @@ function RouteComponent() {
 							<Card
 								key={insp.inspectionId}
 								className={cn(
-									"transition-all duration-500 ease-in-out border-l-4",
+									"transition-all duration-500 ease-in-out border-l-4 animate-in zoom-in-95 duration-400 ease-[cubic-bezier(.4,2,.3,1)]",
 									insp.grade === "A"
-										? "border-green-500 animate-pop"
+										? "border-green-500"
 										: insp.grade === "B"
-											? "border-yellow-500 animate-pop"
-											: "border-red-500 animate-pop",
+											? "border-yellow-500"
+											: "border-red-500",
 								)}
 								style={{ animationDelay: `${idx * 80}ms` }}
 							>
@@ -100,10 +113,22 @@ function RouteComponent() {
 										}
 										className="text-xs px-2 py-1"
 									>
-										{insp.grade || "N/A"}
+										Grade: {insp.grade || "N/A"}
 									</Badge>
 								</CardHeader>
 								<CardContent>
+									<Badge
+										className={cn(
+											"block",
+											insp.critical_flag === "Critical"
+												? badgeVariants({ variant: "destructive" })
+												: insp.critical_flag === "Not Critical"
+													? badgeVariants({ variant: "secondary" })
+													: badgeVariants({ variant: "outline" }),
+										)}
+									>
+										{insp.critical_flag}
+									</Badge>
 									<div className="mb-1 text-sm">
 										<span className="font-medium">Score:</span>{" "}
 										{insp.score ?? "N/A"}
@@ -137,14 +162,6 @@ function RouteComponent() {
 					)}
 				</div>
 			</section>
-			<style>{`
-				@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
-				.animate-fade-in { animation: fade-in 0.7s ease; }
-				@keyframes slide-down { from { transform: translateY(-20px); opacity: 0; } to { transform: none; opacity: 1; } }
-				.animate-slide-down { animation: slide-down 0.5s cubic-bezier(.4,2,.3,1); }
-				@keyframes pop { 0% { transform: scale(0.95); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
-				.animate-pop { animation: pop 0.4s cubic-bezier(.4,2,.3,1); }
-			`}</style>
 		</main>
 	);
 }

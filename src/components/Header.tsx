@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Disc, MapIcon, Sheet, Utensils } from "lucide-react";
+import { Disc, MapIcon, SheetIcon, Utensils } from "lucide-react";
 
 function LogoIcon() {
 	return (
@@ -47,7 +47,7 @@ export default function Header() {
 								"text-primary underline decoration-primary underline-offset-4",
 						}}
 					>
-						<Sheet /> Table
+						<SheetIcon /> Table
 					</Link>
 				</div>
 			</nav>

@@ -3,7 +3,7 @@ import { RestaurantMap } from "@/components/restaurant-map";
 import { restaurantSearchParamsSchema } from "@/schema/schema";
 import { restaurantQueries } from "@/utils/restaurant";
 import { useQuery } from "@tanstack/react-query";
-import { createFileRoute, useSearch } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { Loader2 } from "lucide-react";
 
 export const Route = createFileRoute("/map")({
@@ -13,7 +13,7 @@ export const Route = createFileRoute("/map")({
 });
 
 function MapPage() {
-	const searchParams = useSearch({ from: "/map" });
+	const searchParams = Route.useSearch();
 	const { data, error, isFetching, isLoading } = useQuery(
 		restaurantQueries.list(searchParams),
 	);

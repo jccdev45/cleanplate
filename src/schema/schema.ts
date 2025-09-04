@@ -1,10 +1,19 @@
 import { z } from "zod";
 
+export const BOROS = [
+	"Manhattan",
+	"Bronx",
+	"Brooklyn",
+	"Queens",
+	"Staten Island",
+] as const;
+export const GRADES = ["A", "B", "C", "N", "Z", "P"] as const;
+
 // Main restaurant/inspection row schema
 export const restaurantRawSchema = z.object({
 	camis: z.string(),
 	dba: z.string(),
-	boro: z.string(),
+	boro: z.enum(["Manhattan", "Bronx", "Brooklyn", "Queens", "Staten Island"]),
 	building: z.string().optional(),
 	street: z.string(),
 	zipcode: z.string().optional(),
@@ -27,7 +36,7 @@ export const restaurantRawSchema = z.object({
 		(val) => (val === undefined ? undefined : Number(val)),
 		z.number().optional(),
 	),
-	grade: z.string().optional(),
+	grade: z.enum(["A", "B", "C", "N", "Z", "P"]).optional(),
 	grade_date: z.string().optional(),
 	inspection_type: z.string().optional(),
 });

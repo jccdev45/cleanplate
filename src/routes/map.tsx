@@ -1,6 +1,7 @@
 import { MapFilters } from "@/components/map-filters";
 import { RestaurantMap } from "@/components/restaurant-map";
-import { restaurantSearchParamsSchema } from "@/schema/schema";
+import { Badge } from "@/components/ui/badge";
+import { GRADES, restaurantSearchParamsSchema } from "@/schema/schema";
 import { restaurantQueries } from "@/utils/restaurant";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
@@ -59,12 +60,23 @@ function MapPage() {
 	function AppliedFilters({
 		searchParams,
 	}: { searchParams: Record<string, unknown> }) {
-		const filters: Array<{ label: string; value: string }> = [];
+		const filters: Array<{ label: string; value: string; variant?: string }> =
+			[];
 
 		if (searchParams?.$q)
 			filters.push({ label: "Search", value: String(searchParams.$q) });
-		if (searchParams?.grade)
+		if (
+			searchParams?.grade &&
+			!GRADES.includes(searchParams.grade as (typeof GRADES)[number])
+		) {
+			filters.push({
+				label: "Grade",
+				value: "Invalid",
+				variant: "destructive",
+			});
+		} else if (searchParams?.grade) {
 			filters.push({ label: "Grade", value: String(searchParams.grade) });
+		}
 		if (searchParams?.$limit)
 			filters.push({ label: "Limit", value: String(searchParams.$limit) });
 		if (searchParams?.boro)
@@ -100,15 +112,20 @@ function MapPage() {
 		return (
 			<div className="flex flex-wrap gap-2 justify-center text-sm">
 				{filters.map((f) => (
-					<span
+					<Badge
 						key={f.label}
-						className="px-2 py-1 rounded bg-accent text-accent-foreground"
+						variant={
+							f.variant
+								? (f.variant as
+										| "default"
+										| "secondary"
+										| "destructive"
+										| "outline")
+								: "default"
+						}
 					>
-						{f.label}:{" "}
-						<span className="font-semibold text-primary-foreground">
-							{f.value}
-						</span>
-					</span>
+						{f.label}: <span>{f.value}</span>
+					</Badge>
 				))}
 			</div>
 		);

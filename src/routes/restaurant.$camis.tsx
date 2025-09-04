@@ -1,9 +1,18 @@
 // TODO: Add filter controls for inspections (date sorting, grade filter)
 // TODO: Add sticky header for restaurant info? Maybe
 
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge, badgeVariants } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+	Card,
+	CardContent,
+	CardDescription,
+	CardHeader,
+	CardTitle,
+} from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { restaurantQueries } from "@/utils/restaurant";
@@ -34,14 +43,26 @@ function RouteComponent() {
 
 	return (
 		<main className="flex flex-col items-center px-4 py-6 max-w-2xl mx-auto animate-in fade-in-0 duration-700">
-			<Card className="w-full mb-6 shadow-lg border-2 border-primary/20">
-				<CardHeader>
-					<CardTitle className="text-2xl font-bold text-primary mb-2 animate-in slide-in-from-top-5 duration-500 ease-[cubic-bezier(.4,2,.3,1)]">
-						{restaurant.dba}
-					</CardTitle>
-					<div className="flex flex-wrap gap-2 items-center">
-						<Badge variant="secondary">{restaurant.cuisine_description}</Badge>
-						<Badge>{restaurant.boro}</Badge>
+			<Card className="w-full mb-6 shadow-lg border border-primary/20 sticky top-0 z-10 bg-background">
+				<CardHeader className="flex flex-row items-center gap-4">
+					<Avatar className="h-14 w-14">
+						<AvatarImage
+							src={`https://placehold.co/100?text=${restaurant.dba[0]}`}
+						/>
+						<AvatarFallback>
+							<span className="text-2xl font-bold">{restaurant.dba[0]}</span>
+						</AvatarFallback>
+					</Avatar>
+					<div className="flex-1">
+						<CardTitle className="text-2xl font-bold text-primary mb-1 animate-in slide-in-from-top-5 duration-500 ease-[cubic-bezier(.4,2,.3,1)]">
+							{restaurant.dba}
+						</CardTitle>
+						<CardDescription className="flex flex-wrap gap-2 items-center">
+							<Badge variant="secondary">
+								{restaurant.cuisine_description}
+							</Badge>
+							<Badge>{restaurant.boro}</Badge>
+						</CardDescription>
 					</div>
 				</CardHeader>
 				<CardContent>
@@ -58,10 +79,11 @@ function RouteComponent() {
 					)}
 					<div className="flex gap-4 mt-2">
 						{restaurant.latitude && restaurant.longitude && (
-							<Button asChild>
+							<Button asChild variant="outline">
 								<Link
 									to="/map"
 									target="_blank"
+									aria-label={`View ${restaurant.dba} on map`}
 									search={{
 										latitude: Number(restaurant.latitude),
 										longitude: Number(restaurant.longitude),
@@ -69,7 +91,7 @@ function RouteComponent() {
 										zoom: 15,
 									}}
 								>
-									<MapPinned className="size-5" />
+									<MapPinned className="size-5 mr-2" />
 									View on Map
 								</Link>
 							</Button>
@@ -80,24 +102,35 @@ function RouteComponent() {
 
 			<section className="w-full">
 				<h2 className="text-lg font-semibold mb-4">Inspection History</h2>
+				<Separator className="mb-4" />
 				<div className="flex flex-col gap-4">
 					{restaurant.inspections.length === 0 ? (
-						<div className="text-muted-foreground">No inspections found.</div>
+						<Alert>
+							<AlertTitle>No inspections found.</AlertTitle>
+							<AlertDescription>
+								This restaurant has not been inspected yet or records are
+								unavailable.
+							</AlertDescription>
+						</Alert>
 					) : (
 						restaurant.inspections.map((insp, idx) => (
 							<Card
 								key={insp.inspectionId}
 								className={cn(
 									"transition-all duration-500 ease-in-out border-l-4 animate-in zoom-in-95 duration-400 ease-[cubic-bezier(.4,2,.3,1)]",
-									insp.grade === "A"
-										? "border-green-500"
-										: insp.grade === "B"
-											? "border-yellow-500"
-											: "border-red-500",
+									{
+										A: "border-green-500",
+										B: "border-yellow-500",
+										C: "border-red-500",
+										P: "border-gray-400",
+										Z: "border-gray-400",
+										N: "border-gray-400",
+									}[insp.grade ?? "N"] ?? "border-gray-400",
 								)}
 								style={{ animationDelay: `${idx * 80}ms` }}
+								aria-label={`Inspection on ${insp.inspection_date.slice(0, 10)}`}
 							>
-								<CardHeader className="flex flex-row items-center justify-between">
+								<CardHeader className="flex flex-row items-center justify-between gap-2">
 									<CardTitle className="text-base font-bold">
 										{insp.inspection_date.slice(0, 10)}
 									</CardTitle>
@@ -117,45 +150,48 @@ function RouteComponent() {
 									</Badge>
 								</CardHeader>
 								<CardContent>
-									<Badge
-										className={cn(
-											"block",
-											insp.critical_flag === "Critical"
-												? badgeVariants({ variant: "destructive" })
-												: insp.critical_flag === "Not Critical"
-													? badgeVariants({ variant: "secondary" })
-													: badgeVariants({ variant: "outline" }),
+									<div className="flex flex-col gap-2">
+										<Badge
+											className={cn(
+												"w-fit",
+												insp.critical_flag === "Critical"
+													? badgeVariants({ variant: "destructive" })
+													: insp.critical_flag === "Not Critical"
+														? badgeVariants({ variant: "secondary" })
+														: badgeVariants({ variant: "outline" }),
+											)}
+										>
+											{insp.critical_flag}
+										</Badge>
+										<div className="text-sm">
+											<span className="font-medium">Score:</span>{" "}
+											{insp.score ?? "N/A"}
+										</div>
+										{insp.action && (
+											<div className="text-xs text-muted-foreground">
+												<span className="font-medium">Action:</span>{" "}
+												{insp.action}
+											</div>
 										)}
-									>
-										{insp.critical_flag}
-									</Badge>
-									<div className="mb-1 text-sm">
-										<span className="font-medium">Score:</span>{" "}
-										{insp.score ?? "N/A"}
+										{insp.violations.length > 0 && (
+											<div>
+												<span className="font-medium">Violations:</span>
+												<ul className="list-disc ml-6 mt-1 text-xs">
+													{insp.violations.map((v) => (
+														<li
+															key={`${insp.inspectionId}-${v.violation_code}`}
+															className="mb-1"
+														>
+															<span className="font-semibold text-red-600">
+																{v.violation_code}
+															</span>
+															: {v.violation_description}
+														</li>
+													))}
+												</ul>
+											</div>
+										)}
 									</div>
-									{insp.action && (
-										<div className="mt-2 text-xs text-muted-foreground">
-											<span className="font-medium">Action:</span> {insp.action}
-										</div>
-									)}
-									{insp.violations.length > 0 && (
-										<div className="mt-2">
-											<span className="font-medium">Violations:</span>
-											<ul className="list-disc ml-6 mt-1 text-xs">
-												{insp.violations.map((v) => (
-													<li
-														key={`${insp.inspectionId}-${v.violation_code}`}
-														className="mb-1"
-													>
-														<span className="font-semibold text-red-600">
-															{v.violation_code}
-														</span>
-														: {v.violation_description}
-													</li>
-												))}
-											</ul>
-										</div>
-									)}
 								</CardContent>
 							</Card>
 						))

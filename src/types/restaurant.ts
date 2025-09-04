@@ -2,7 +2,7 @@
 export interface RestaurantBase {
 	camis: string;
 	dba: string;
-	boro: string;
+	boro: "Manhattan" | "Bronx" | "Brooklyn" | "Queens" | "Staten Island";
 	street: string;
 	building?: string;
 	zipcode?: string;
@@ -25,7 +25,7 @@ export interface InspectionDetails {
 	action?: string;
 	critical_flag?: string;
 	score?: number;
-	grade?: string;
+	grade?: "A" | "B" | "C" | "N" | "Z" | "P";
 	grade_date?: string;
 	inspection_type?: string;
 }

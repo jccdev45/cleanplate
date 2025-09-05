@@ -343,6 +343,7 @@ Apply the [base coding guidelines](./base-instructions.md) to all code.
 - Use ternaries or `&&` for conditional rendering.
 - Minimize `useEffect` — prefer derived state or server-driven logic.
 - Use React 18 concurrent features (`useTransition`, `useDeferredValue`) when appropriate.
+- Import packages directly (e.g. `import { useState } from "react"` instead of `import React from { react }`).
 
 ## TypeScript Practices
 

@@ -10,12 +10,11 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import type { FilterFn } from "@tanstack/react-table";
 import { AlertCircleIcon } from "lucide-react";
-import React from "react";
+import { useState } from "react";
 
 export const Route = createFileRoute("/table")({
 	component: TableRoute,
 	validateSearch: (search) => restaurantSearchParamsSchema.parse(search),
-	ssr: "data-only",
 });
 
 const fuzzyFilter: FilterFn<Restaurant> = (row, columnId, value, addMeta) => {
@@ -27,9 +26,7 @@ const fuzzyFilter: FilterFn<Restaurant> = (row, columnId, value, addMeta) => {
 function TableRoute() {
 	const searchParams = Route.useSearch();
 
-	const [globalFilter, setGlobalFilter] = React.useState(
-		searchParams?.$q || "",
-	);
+	const [globalFilter, setGlobalFilter] = useState(searchParams?.$q || "");
 
 	const { data, error, isFetching } = useSuspenseQuery(
 		restaurantQueries.list({

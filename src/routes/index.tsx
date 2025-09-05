@@ -49,7 +49,7 @@ function IndexErrorComponent({ error }: ErrorComponentProps) {
 
 function App() {
 	return (
-		<div className="container mx-auto py-8">
+		<div className="container max-w-4xl mx-auto py-8">
 			<section className="text-center mb-12">
 				<h1 className="text-4xl font-bold tracking-tight lg:text-5xl">
 					Clean Plate

@@ -75,13 +75,16 @@ export const getRestaurantsFn = createServerFn({ method: "GET" })
 		return { restaurants, count: restaurants.length };
 	});
 
+const HOUR_IN_MS = 1000 * 60 * 60;
+// const DAY_IN_MS = HOUR_IN_MS * 24;
+
 export const restaurantQueries = {
 	list: (params?: RestaurantSearchParams) => {
 		return queryOptions({
 			queryKey: ["restaurants", params],
 			queryFn: () => getRestaurantsFn({ data: params }),
-			staleTime: 1000 * 60 * 10, // 10min
-			gcTime: 1000 * 60 * 30, // 30min
+			staleTime: HOUR_IN_MS,
+			gcTime: HOUR_IN_MS * 2,
 			refetchOnWindowFocus: false,
 		});
 	},
@@ -89,8 +92,8 @@ export const restaurantQueries = {
 		return queryOptions({
 			queryKey: ["restaurants", "detail", camis],
 			queryFn: () => getRestaurantsFn({ data: { camis } }),
-			staleTime: 1000 * 60 * 60 * 1, // 1 hours
-			gcTime: 1000 * 60 * 60 * 2, // 2 hours
+			staleTime: HOUR_IN_MS,
+			gcTime: HOUR_IN_MS * 2,
 			refetchOnWindowFocus: false,
 		});
 	},

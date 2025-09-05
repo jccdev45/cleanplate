@@ -1,23 +1,21 @@
-import type { Restaurant } from "@/types/restaurant";
-import { Link } from "@tanstack/react-router";
-import type { Column, ColumnDef } from "@tanstack/react-table";
+import { Button } from "@/components/ui/button";
 import {
 	Tooltip,
 	TooltipContent,
 	TooltipProvider,
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Button } from "@/components/ui/button";
-import {
-	ArrowUpDown,
-	ChevronDown,
-	ChevronUp,
-} from "lucide-react";
+import type { Restaurant } from "@/types/restaurant";
+import { Link } from "@tanstack/react-router";
+import type { Column, ColumnDef } from "@tanstack/react-table";
+import { ArrowUpDown, ChevronDown, ChevronUp, Info } from "lucide-react";
 
 export const columns: ColumnDef<Restaurant>[] = [
 	{
 		accessorKey: "dba",
-		header: ({ column }) => <SortableHeader column={column}>Name</SortableHeader>,
+		header: ({ column }) => (
+			<SortableHeader column={column}>Name</SortableHeader>
+		),
 		cell: ({ row, getValue }) => (
 			<Link
 				to="/restaurant/$camis"
@@ -41,6 +39,7 @@ export const columns: ColumnDef<Restaurant>[] = [
 			<SortableHeader column={column}>Zipcode</SortableHeader>
 		),
 		size: 80,
+		cell: ({ row }) => row.original.zipcode || "------",
 	},
 	{
 		accessorKey: "boro",
@@ -57,11 +56,37 @@ export const columns: ColumnDef<Restaurant>[] = [
 	},
 	{
 		accessorKey: "grade",
-		header: ({ column }) => (
-			<SortableHeader column={column}>Grade</SortableHeader>
-		),
+		header: ({ column }) => {
+			const gradeExplanations = {
+				A: "Grade A",
+				B: "Grade B",
+				C: "Grade C",
+				N: "Not Yet Graded",
+				P: "Grade Pending issued on re-opening",
+				Z: "Grade Pending",
+			};
+			return (
+				<div className="flex items-center gap-2">
+					<SortableHeader column={column}>Grade</SortableHeader>
+					<TooltipProvider>
+						<Tooltip>
+							<TooltipTrigger>
+								<Info className="size-4 text-muted-foreground" />
+							</TooltipTrigger>
+							<TooltipContent>
+								<ul className="list-disc pl-4">
+									{Object.entries(gradeExplanations).map(([grade, desc]) => (
+										<li key={grade}>{`${grade}: ${desc}`}</li>
+									))}
+								</ul>
+							</TooltipContent>
+						</Tooltip>
+					</TooltipProvider>
+				</div>
+			);
+		},
 		accessorFn: (row) => row.inspections[0]?.grade,
-		cell: ({ getValue }) => getValue() ?? "N/A",
+		cell: ({ getValue }) => getValue() ?? "--",
 		size: 80,
 	},
 	{

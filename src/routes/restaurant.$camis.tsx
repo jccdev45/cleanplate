@@ -1,6 +1,3 @@
-// TODO: Add filter controls for inspections (date sorting, grade filter)
-// TODO: Add sticky header for restaurant info? Maybe
-
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge, badgeVariants } from "@/components/ui/badge";
@@ -17,8 +14,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { restaurantQueries } from "@/utils/restaurant";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { Link, createFileRoute } from "@tanstack/react-router";
-import { MapPinned } from "lucide-react";
+import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
+import { FunnelX, MapPinned } from "lucide-react";
 
 export const Route = createFileRoute("/restaurant/$camis")({
 	component: RouteComponent,
@@ -28,6 +25,7 @@ export const Route = createFileRoute("/restaurant/$camis")({
 	head: ({ loaderData }) => ({
 		meta: loaderData ? [{ title: loaderData.restaurants[0].dba }] : undefined,
 	}),
+	validateSearch: (search) => search, // Allow any search params
 });
 
 function RouteComponent() {
@@ -35,16 +33,47 @@ function RouteComponent() {
 	const {
 		data: { restaurants },
 	} = useSuspenseQuery(restaurantQueries.detail(camis));
+	const navigate = useNavigate({ from: Route.fullPath });
+	const search = Route.useSearch();
+
+	const setViolationFilter = (filter: string | null) => {
+		navigate({
+			search: (prev) => ({ ...prev, violationFilter: filter || undefined }),
+			replace: true,
+		});
+	};
+
+	const violationFilter = (search as { violationFilter?: string })
+		.violationFilter;
 
 	const restaurant = restaurants?.[0];
 	if (!restaurant) {
 		return <Skeleton className="h-32 w-full" />;
 	}
 
+	const violationKeywords = [
+		"Pest",
+		"Temperature",
+		"Sanitation",
+		"Hygiene",
+		"Contamination",
+		"Signage",
+	];
+
+	const filteredInspections = violationFilter
+		? restaurant.inspections.filter((insp) =>
+				insp.violations.some((v) =>
+					v.violation_description
+						.toLowerCase()
+						.includes(violationFilter.toLowerCase()),
+				),
+			)
+		: restaurant.inspections;
+
 	return (
 		<main className="flex flex-col items-center px-4 py-6 max-w-2xl mx-auto animate-in fade-in-0 duration-700">
-			<Card className="w-full mb-6 shadow-lg border border-primary/20 sticky top-0 z-10 bg-background">
-				<CardHeader className="flex flex-row items-center gap-4">
+			<Card className="w-full mb-6 shadow-lg border border-primary/20">
+				<CardHeader className="flex flex-row items-center sticky top-0 z-10 border-b">
 					<Avatar className="h-14 w-14">
 						<AvatarImage
 							src={`https://placehold.co/100?text=${restaurant.dba[0]}`}
@@ -64,20 +93,7 @@ function RouteComponent() {
 							<Badge>{restaurant.boro}</Badge>
 						</CardDescription>
 					</div>
-				</CardHeader>
-				<CardContent>
-					<div className="mb-2 text-sm text-muted-foreground">
-						<span>
-							{restaurant.building} {restaurant.street}, {restaurant.boro}{" "}
-							{restaurant.zipcode}
-						</span>
-					</div>
-					{restaurant.phone && (
-						<div className="mb-2 text-sm">
-							<span className="font-medium">Phone:</span> {restaurant.phone}
-						</div>
-					)}
-					<div className="flex gap-4 mt-2">
+					<div>
 						{restaurant.latitude && restaurant.longitude && (
 							<Button asChild variant="outline">
 								<Link
@@ -97,14 +113,57 @@ function RouteComponent() {
 							</Button>
 						)}
 					</div>
+				</CardHeader>
+				<CardContent>
+					<div className="mb-2 text-sm text-muted-foreground">
+						<span>
+							{restaurant.building} {restaurant.street}, {restaurant.boro}{" "}
+							{restaurant.zipcode}
+						</span>
+					</div>
+					{restaurant.phone && (
+						<div className="mb-2 text-sm">
+							<span className="font-medium">Phone:</span> {restaurant.phone}
+						</div>
+					)}
 				</CardContent>
 			</Card>
 
-			<section className="w-full">
+			<section className="w-full space-y-2">
+				<h3 className="text-sm font-semibold">Filter Violations</h3>
+				<div className="flex flex-wrap gap-2">
+					<Button
+						onClick={() => setViolationFilter(null)}
+						variant={violationFilter === null ? "default" : "ghost"}
+						size="sm"
+					>
+						<FunnelX />
+					</Button>
+					{violationKeywords.map((keyword) => (
+						<Button
+							key={keyword}
+							variant={violationFilter === keyword ? "default" : "outline"}
+							onClick={() =>
+								setViolationFilter(violationFilter === keyword ? null : keyword)
+							}
+							size="sm"
+						>
+							{keyword}
+						</Button>
+					))}
+				</div>
 				<h2 className="text-lg font-semibold mb-4">Inspection History</h2>
-				<Separator className="mb-4" />
+				<Separator className="" />
 				<div className="flex flex-col gap-4">
-					{restaurant.inspections.length === 0 ? (
+					{filteredInspections.length === 0 ? (
+						<Alert>
+							<AlertTitle>No matching inspections found.</AlertTitle>
+							<AlertDescription>
+								Try a different filter or clear the selection to see all
+								inspections.
+							</AlertDescription>
+						</Alert>
+					) : restaurant.inspections.length === 0 ? (
 						<Alert>
 							<AlertTitle>No inspections found.</AlertTitle>
 							<AlertDescription>
@@ -113,11 +172,11 @@ function RouteComponent() {
 							</AlertDescription>
 						</Alert>
 					) : (
-						restaurant.inspections.map((insp, idx) => (
+						filteredInspections.map((insp, idx) => (
 							<Card
 								key={insp.inspectionId}
 								className={cn(
-									"transition-all duration-500 ease-in-out border-l-4 animate-in zoom-in-95 duration-400 ease-[cubic-bezier(.4,2,.3,1)]",
+									"transition-all duration-500 ease-in-out border-l-4 animate-in zoom-in-95 hover:scale-105 hover:shadow-xl",
 									{
 										A: "border-green-500",
 										B: "border-yellow-500",
@@ -137,7 +196,7 @@ function RouteComponent() {
 									<Badge
 										variant={
 											insp.grade === "A"
-												? "default"
+												? "success"
 												: insp.grade === "B"
 													? "secondary"
 													: insp.grade === "C"

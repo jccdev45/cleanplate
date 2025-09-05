@@ -10,23 +10,6 @@ import { createServerFn } from "@tanstack/react-start";
 
 const appToken = process.env.RESTAURANT_API_APP_TOKEN;
 
-// This schema defines only the parameters that the Socrata API accepts.
-const apiSchema = restaurantSearchParamsSchema.pick({
-	$limit: true,
-	$offset: true,
-	$order: true,
-	$q: true,
-	$where: true,
-	boro: true,
-	camis: true,
-	critical_flag: true,
-	dba: true,
-	grade: true,
-	inspection_date: true,
-	score: true,
-	zipcode: true,
-});
-
 export const getRestaurantsFn = createServerFn({ method: "GET" })
 	// Accept strong params via Zod. This allows map-specific params to exist in the URL
 	.validator((val) => restaurantSearchParamsSchema.parse(val))
@@ -34,7 +17,7 @@ export const getRestaurantsFn = createServerFn({ method: "GET" })
 		const BASE_URL = "https://data.cityofnewyork.us/resource/43nn-pn8j.json";
 
 		// Parse the incoming data with the strict API schema to strip out non-API params
-		const apiParams = apiSchema.parse(data);
+		// const apiParams = apiSchema.parse(data);
 
 		// Default to a high limit if none is provided to get a large dataset
 		// const paramsWithLimit = { $limit: 5000, ...apiParams };
@@ -43,7 +26,7 @@ export const getRestaurantsFn = createServerFn({ method: "GET" })
 		const url = new URL(BASE_URL);
 		// Convert all params to string before passing to URLSearchParams
 		const stringifiedParams = Object.fromEntries(
-			Object.entries({ ...apiParams }).map(([key, value]) => {
+			Object.entries({ ...data }).map(([key, value]) => {
 				if (value === undefined) return [key, ""];
 				return [key, String(value)];
 			}),

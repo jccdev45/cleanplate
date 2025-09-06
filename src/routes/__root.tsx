@@ -11,6 +11,7 @@ import TanStackQueryLayout from "../integrations/tanstack-query/layout.tsx";
 
 import appCss from "../styles.css?url";
 
+import { Footer } from "@/components/footer.tsx";
 import type { QueryClient } from "@tanstack/react-query";
 
 interface MyRouterContext {
@@ -51,6 +52,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 			<body>
 				<Header />
 				{children}
+				<Footer />
 				<TanStackRouterDevtools />
 				<TanStackQueryLayout />
 				<Scripts />

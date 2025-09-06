@@ -16,7 +16,10 @@ export const Route = createFileRoute("/map")({
 function MapPage() {
 	const searchParams = Route.useSearch();
 	const { data, error, isFetching, isLoading } = useQuery(
-		restaurantQueries.list(searchParams),
+		restaurantQueries.list({
+			...searchParams,
+			// $limit: 5000,
+		}),
 	);
 
 	return (

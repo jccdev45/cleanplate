@@ -5,7 +5,11 @@ import {
 	restaurantApiResponseSchema,
 	restaurantSearchParamsSchema,
 } from "@/schema/schema";
-import { queryOptions } from "@tanstack/react-query";
+import {
+	infiniteQueryOptions,
+	keepPreviousData,
+	queryOptions,
+} from "@tanstack/react-query";
 import { createServerFn } from "@tanstack/react-start";
 
 const appToken = process.env.RESTAURANT_API_APP_TOKEN;
@@ -15,12 +19,6 @@ export const getRestaurantsFn = createServerFn({ method: "GET" })
 	.validator((val) => restaurantSearchParamsSchema.parse(val))
 	.handler(async ({ data }) => {
 		const BASE_URL = "https://data.cityofnewyork.us/resource/43nn-pn8j.json";
-
-		// Parse the incoming data with the strict API schema to strip out non-API params
-		// const apiParams = apiSchema.parse(data);
-
-		// Default to a high limit if none is provided to get a large dataset
-		// const paramsWithLimit = { $limit: 5000, ...apiParams };
 
 		// Construct URL with query parameters
 		const url = new URL(BASE_URL);
@@ -55,7 +53,13 @@ export const getRestaurantsFn = createServerFn({ method: "GET" })
 		// Transform/group
 		const restaurants = groupRestaurants(rawRows);
 
-		return { restaurants, count: restaurants.length };
+		return {
+			restaurants,
+			count: restaurants.length,
+			nextOffset: restaurants.length
+				? (data.$offset ?? 0) + (data.$limit ?? 0)
+				: undefined,
+		};
 	});
 
 const HOUR_IN_MS = 1000 * 60 * 60;
@@ -66,6 +70,23 @@ export const restaurantQueries = {
 		return queryOptions({
 			queryKey: ["restaurants", params],
 			queryFn: () => getRestaurantsFn({ data: params }),
+			staleTime: HOUR_IN_MS,
+			gcTime: HOUR_IN_MS * 2,
+			refetchOnWindowFocus: false,
+			placeholderData: keepPreviousData,
+		});
+	},
+	infiniteList: (
+		params?: Omit<RestaurantSearchParams, "$limit" | "$offset">,
+	) => {
+		return infiniteQueryOptions({
+			queryKey: ["restaurants", "infinite", params],
+			queryFn: ({ pageParam }) =>
+				getRestaurantsFn({
+					data: { ...params, $offset: pageParam, $limit: 1000 },
+				}),
+			initialPageParam: 0,
+			getNextPageParam: (lastPage) => lastPage.nextOffset,
 			staleTime: HOUR_IN_MS,
 			gcTime: HOUR_IN_MS * 2,
 			refetchOnWindowFocus: false,

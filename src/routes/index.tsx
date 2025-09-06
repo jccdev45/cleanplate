@@ -1,3 +1,12 @@
+import {
+	Hero,
+	HeroCTA,
+	HeroContent,
+	HeroMedia,
+	HeroOverlay,
+	HeroSubtitle,
+	HeroTitle,
+} from "@/components/hero";
 import { TopRestaurants } from "@/components/top-restaurants";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -10,13 +19,14 @@ import {
 	CarouselPrevious,
 } from "@/components/ui/carousel";
 import { WorstRestaurants } from "@/components/worst-restaurants";
+import { HERO_IMAGES } from "@/lib/constants";
 import { restaurantQueries } from "@/utils/restaurant";
 import {
 	ErrorComponent,
 	type ErrorComponentProps,
 	createFileRoute,
 } from "@tanstack/react-router";
-import { CalendarSync, ShieldCheck, TextSearch } from "lucide-react";
+import { CalendarSync, MapIcon, ShieldCheck, TextSearch } from "lucide-react";
 
 export const Route = createFileRoute("/")({
 	loader: async ({ context }) => {
@@ -61,24 +71,22 @@ function App() {
 	return (
 		<main className="container max-w-5xl mx-auto py-12 px-4">
 			{/* Hero Section */}
-			<section className="flex flex-col items-center justify-center text-center mb-16 animate-in fade-in slide-in-from-bottom duration-1000">
-				<h1
-					className="text-5xl lg:text-6xl font-bold tracking-tight mb-4 font-serif"
-					style={{ color: "var(--color-primary)" }}
-				>
-					Clean Plate
-				</h1>
-				<p className="text-xl text-muted-foreground mb-6 max-w-2xl">
-					Discover NYC's best—and worst—restaurant health inspections. Eat
-					smart, stay safe.
-				</p>
-			</section>
+			<Hero className="mb-16">
+				<HeroMedia images={HERO_IMAGES} />
+				<HeroOverlay />
+				<HeroContent>
+					<HeroTitle>CLEANPLATE</HeroTitle>
+					<HeroSubtitle>
+						Explore NYC restaurant health grades and inspections.
+					</HeroSubtitle>
+					<HeroCTA to="/map">
+						<MapIcon className="size-6" /> View the map
+					</HeroCTA>
+				</HeroContent>
+			</Hero>
 
 			{/* Features Grid */}
 			<section className="mb-16">
-				<h2 className="text-3xl font-semibold tracking-tight text-center mb-8 font-serif">
-					Why Clean Plate?
-				</h2>
 				<div className="grid grid-cols-1 md:grid-cols-3 gap-8">
 					<Card className="p-6 flex flex-col items-center text-center shadow-md animate-in fade-in duration-700">
 						<ShieldCheck className="mb-4 size-12 text-accent" />

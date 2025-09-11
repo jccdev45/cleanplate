@@ -1,18 +1,14 @@
+import { Footer } from "@/components/footer.tsx";
+import { NavMenu } from "@/components/nav-menu.tsx";
+import TanStackQueryLayout from "@/integrations/tanstack-query/layout.tsx";
+import appCss from "@/styles.css?url";
+import type { QueryClient } from "@tanstack/react-query";
 import {
 	HeadContent,
 	Scripts,
 	createRootRouteWithContext,
 } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
-
-import Header from "../components/Header";
-
-import TanStackQueryLayout from "../integrations/tanstack-query/layout.tsx";
-
-import appCss from "../styles.css?url";
-
-import { Footer } from "@/components/footer.tsx";
-import type { QueryClient } from "@tanstack/react-query";
 
 interface MyRouterContext {
 	queryClient: QueryClient;
@@ -50,7 +46,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 				<HeadContent />
 			</head>
 			<body>
-				<Header />
+				<NavMenu />
 				{children}
 				<Footer />
 				<TanStackRouterDevtools />

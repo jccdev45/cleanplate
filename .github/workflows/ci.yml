@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+    branches: [ master, main ]
+  pull_request:
+    branches: [ master, main ]
+
+jobs:
+  ci:
+    name: CI
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: Install dependencies (bun)
+        run: bun install
+
+      - name: Lint (Biome)
+        run: bun run lint
+
+      - name: Static checks (Biome)
+        run: bun run check
+
+      - name: Type-check (TypeScript)
+        run: bunx tsc --noEmit
+
+      - name: Run tests (Vitest)
+        run: bun run test

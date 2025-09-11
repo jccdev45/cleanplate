@@ -126,18 +126,19 @@ export function MapFilters() {
 
 	return (
 		<Sheet>
-			<SheetTrigger className="flex items-center gap-2">
-				<FilterIcon className="fill-primary/70" />
-				<span className="font-bold">Filters</span>
-			</SheetTrigger>
+			<Button asChild variant="outline" size="sm">
+				<SheetTrigger className="flex items-center gap-2">
+					<FilterIcon className="fill-primary/70" />
+					<span className="font-bold">Filters</span>
+				</SheetTrigger>
+			</Button>
 			<TooltipProvider>
 				<SheetContent side="left">
 					<SheetHeader>
 						<SheetTitle>Filters</SheetTitle>
 						<SheetDescription>
 							Use these filters to refine the restaurant results shown on the
-							map. Adjust grade, result limit, or borough to explore different
-							areas and data sets. Higher limits may impact performance.
+							map. Higher limits may impact performance.
 						</SheetDescription>
 					</SheetHeader>
 					<Button asChild className="w-1/2 mx-auto">

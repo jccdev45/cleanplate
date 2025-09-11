@@ -166,7 +166,7 @@ function HeroContent({
 			className="absolute inset-0 flex items-center justify-center"
 			{...props}
 		>
-			<div className="space-y-2 text-center dark:text-foreground text-background bg-background/10 dark:bg-foreground/10 p-2 rounded-lg w-full max-w-md lg:max-w-xl text-balance z-10 backdrop-blur-xs">
+			<div className="space-y-2 text-center dark:text-foreground text-background bg-background/10 dark:bg-foreground/10 p-2 rounded-lg w-5/6 mx-auto max-w-md lg:max-w-xl text-balance z-10 backdrop-blur-xs">
 				{children}
 			</div>
 		</div>

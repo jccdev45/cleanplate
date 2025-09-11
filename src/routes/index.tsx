@@ -19,6 +19,7 @@ import {
 	CarouselPrevious,
 } from "@/components/ui/carousel";
 import { WorstRestaurants } from "@/components/worst-restaurants";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { HERO_IMAGES } from "@/lib/constants";
 import { restaurantQueries } from "@/utils/restaurant";
 import {
@@ -67,7 +68,31 @@ function IndexErrorComponent({ error }: ErrorComponentProps) {
 	return <ErrorComponent error={error} />;
 }
 
+const TESTIMONIALS = [
+	{
+		imageInitial: "J",
+		fallback: "JL",
+		quote:
+			"“Clean Plate helped me find safe places to eat for my family. Super easy to use!”",
+		author: "— Jamie L.",
+	},
+	{
+		imageInitial: "A",
+		fallback: "AP",
+		quote: "“I love the up-to-date info. I check before every dinner out!”",
+		author: "— Alex P.",
+	},
+	{
+		imageInitial: "P",
+		fallback: "PS",
+		quote: "“The design is beautiful and the data is trustworthy.”",
+		author: "— Priya S.",
+	},
+];
+
 function App() {
+	const isMobile = useIsMobile();
+
 	return (
 		<main className="container max-w-5xl mx-auto py-12 px-4">
 			{/* Hero Section */}
@@ -115,52 +140,32 @@ function App() {
 				</div>
 			</section>
 
+			{/* NOTE: Might just remove this entirely? */}
 			{/* Testimonials Carousel */}
 			<section className="mb-16">
 				<h2 className="text-3xl font-semibold tracking-tight text-center mb-8 font-serif">
 					What People Are Saying
 				</h2>
-				<div className="max-w-2xl mx-auto">
-					<Carousel>
+				<div className="max-w-2xl mx-auto py-4">
+					<Carousel orientation={isMobile ? "vertical" : "horizontal"}>
 						<CarouselContent>
-							<CarouselItem>
-								<Card className="p-6 flex flex-col items-center text-center">
-									<Avatar>
-										<AvatarImage src="https://placehold.co/100?text=J" />
-										<AvatarFallback>JL</AvatarFallback>
-									</Avatar>
-									<p className="italic mb-2">
-										“Clean Plate helped me find safe places to eat for my
-										family. Super easy to use!”
-									</p>
-									<span className="font-semibold">— Jamie L.</span>
-								</Card>
-							</CarouselItem>
-							<CarouselItem>
-								<Card className="p-6 flex flex-col items-center text-center">
-									<Avatar>
-										<AvatarImage src="https://placehold.co/100?text=A" />
-										<AvatarFallback>AP</AvatarFallback>
-									</Avatar>
-									<p className="italic mb-2">
-										“I love the up-to-date info. I check before every dinner
-										out!”
-									</p>
-									<span className="font-semibold">— Alex P.</span>
-								</Card>
-							</CarouselItem>
-							<CarouselItem>
-								<Card className="p-6 flex flex-col items-center text-center">
-									<Avatar>
-										<AvatarImage src="https://placehold.co/100?text=P" />
-										<AvatarFallback>PS</AvatarFallback>
-									</Avatar>
-									<p className="italic mb-2">
-										“The design is beautiful and the data is trustworthy.”
-									</p>
-									<span className="font-semibold">— Priya S.</span>
-								</Card>
-							</CarouselItem>
+							{TESTIMONIALS.map((testimonial) => (
+								<CarouselItem
+									key={testimonial.author}
+									className="basis-full sm:basis-1/2"
+								>
+									<Card className="p-6 flex flex-col items-center text-center">
+										<Avatar>
+											<AvatarImage
+												src={`https://placehold.co/100?text=${testimonial.imageInitial}`}
+											/>
+											<AvatarFallback>{testimonial.fallback}</AvatarFallback>
+										</Avatar>
+										<p className="italic mb-2">{testimonial.quote}</p>
+										<span className="font-semibold">{testimonial.author}</span>
+									</Card>
+								</CarouselItem>
+							))}
 						</CarouselContent>
 						<CarouselPrevious />
 						<CarouselNext />

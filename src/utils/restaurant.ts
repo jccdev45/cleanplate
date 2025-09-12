@@ -3,6 +3,7 @@ import {
 	type RestaurantRaw,
 	type RestaurantSearchParams,
 	restaurantApiResponseSchema,
+	restaurantRawSchema,
 	restaurantSearchParamsSchema,
 } from "@/schema/schema";
 import {
@@ -22,15 +23,94 @@ export const getRestaurantsFn = createServerFn({ method: "GET" })
 
 		// Construct URL with query parameters
 		const url = new URL(BASE_URL);
-		// Convert all params to string before passing to URLSearchParams
-		const stringifiedParams = Object.fromEntries(
-			Object.entries({ ...data }).map(([key, value]) => {
-				if (value === undefined) return [key, ""];
-				return [key, String(value)];
-			}),
-		);
-		if (stringifiedParams) {
-			url.search = new URLSearchParams(stringifiedParams).toString();
+		// Copy into a mutable params object so we can add $select and defaults without breaking types
+		const paramsRaw: Record<string, unknown> = {
+			...(data as Record<string, unknown>),
+		};
+
+		// Helper: strip surrounding quotes and whitespace
+		const stripQuotes = (v: unknown) => {
+			if (v === undefined || v === null) return undefined;
+			const s = String(v).trim();
+			return s.replace(/^"+|"+$/g, "");
+		};
+
+		// Helper: parse number safely after stripping quotes
+		const parseNum = (v: unknown) => {
+			const s = stripQuotes(v);
+			if (s === undefined) return undefined;
+			const n = Number(s);
+			return Number.isFinite(n) ? n : undefined;
+		};
+
+		// Build a sanitized params object for URL generation
+		const params: Record<string, unknown> = {};
+		for (const [k, v] of Object.entries(paramsRaw)) {
+			if (v === undefined || v === null) continue;
+			// Keep raw strings/numbers, but strip quotes for strings
+			if (typeof v === "string") {
+				params[k] = stripQuotes(v);
+			} else {
+				params[k] = v;
+			}
+		}
+
+		// If markerOnly flag present (coerce and accept quoted values), request compact fields and lower default limit
+		const markerVal = stripQuotes(params.markerOnly ?? paramsRaw.markerOnly);
+		const markerOnly =
+			markerVal === "1" ||
+			(typeof markerVal === "string" && markerVal.toLowerCase() === "true") ||
+			params.markerOnly === true ||
+			paramsRaw.markerOnly === true;
+		if (markerOnly) {
+			// include cuisine_description and building/street so the client can synthesize an address
+			params.$select =
+				"camis,dba,latitude,longitude,grade,critical_flag,inspection_date,boro,zipcode,cuisine_description,building,street";
+			if (params.$limit === undefined) params.$limit = 300;
+		}
+
+		// If bounding box params are provided, construct a Socrata $where to restrict by bbox
+		const minLatN = parseNum(params.minLat ?? paramsRaw.minLat);
+		const maxLatN = parseNum(params.maxLat ?? paramsRaw.maxLat);
+		const minLngN = parseNum(params.minLng ?? paramsRaw.minLng);
+		const maxLngN = parseNum(params.maxLng ?? paramsRaw.maxLng);
+		const hasBbox =
+			minLatN !== undefined &&
+			maxLatN !== undefined &&
+			minLngN !== undefined &&
+			maxLngN !== undefined;
+		if (hasBbox) {
+			// Socrata field names are latitude and longitude
+			params.$where = `latitude >= ${minLatN} AND latitude <= ${maxLatN} AND longitude >= ${minLngN} AND longitude <= ${maxLngN}`;
+			// also write back numeric bbox so downstream code can rely on numbers if needed
+			params.minLat = minLatN;
+			params.maxLat = maxLatN;
+			params.minLng = minLngN;
+			params.maxLng = maxLngN;
+		}
+
+		// Remove internal-only keys that Socrata doesn't accept
+		const INTERNAL_KEYS = [
+			"minLat",
+			"maxLat",
+			"minLng",
+			"maxLng",
+			"markerOnly",
+			// Client-only params that shouldn't be forwarded to Socrata
+			"zoom",
+		];
+		for (const k of INTERNAL_KEYS) {
+			if (k in params) delete params[k];
+		}
+
+		// Convert all params to string before passing to URLSearchParams, omitting undefined
+		const entries: [string, string][] = [];
+		for (const [key, value] of Object.entries(params)) {
+			if (value === undefined || value === null) continue;
+			entries.push([key, String(value)]);
+		}
+		if (entries.length) {
+			url.search = new URLSearchParams(entries).toString();
 		}
 
 		const response = await fetch(url.toString(), {
@@ -39,15 +119,33 @@ export const getRestaurantsFn = createServerFn({ method: "GET" })
 				...(appToken ? { "X-App-Token": appToken } : {}),
 			},
 		});
+		if (!response.ok) {
+			const text = await response.text();
+			throw new Error(
+				`Socrata request failed: ${response.status} ${response.statusText} url=${url.toString()} body=${text.slice(0, 1000)}`,
+			);
+		}
+
 		const result = await response.json();
 
 		// Validate API response is an array of restaurant objects
 		let rawRows: RestaurantRaw[];
 		try {
-			rawRows = restaurantApiResponseSchema.parse(result);
+			if (markerOnly) {
+				// marker-only responses return a trimmed set of fields; accept partial rows
+				rawRows = (await import("zod")).z
+					.array(restaurantRawSchema.partial())
+					.parse(result) as RestaurantRaw[];
+			} else {
+				rawRows = restaurantApiResponseSchema.parse(result);
+			}
 		} catch (err) {
+			const snippet =
+				typeof result === "string"
+					? result.slice(0, 1000)
+					: JSON.stringify(result).slice(0, 1000);
 			throw new Error(
-				"API response was not an array of restaurant objects. Check Socrata API and schema.",
+				`API response was not an array of restaurant objects. url=${url.toString()} result_snippet=${snippet}`,
 			);
 		}
 		// Transform/group

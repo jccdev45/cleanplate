@@ -54,12 +54,21 @@ export const restaurantSearchParamsSchema = z.object({
 	longitude: z.number().optional(),
 	boro: z.string().optional(),
 	zoom: z.number().min(0).max(22).optional(),
+	// Bounding box for map viewport queries
+	minLat: z.number().optional(),
+	maxLat: z.number().optional(),
+	minLng: z.number().optional(),
+	maxLng: z.number().optional(),
 	$group: z.string().optional(),
 	$limit: z.number().max(10000).default(1000).optional(),
 	$offset: z.number().default(0).optional(),
 	$q: z.string().optional(),
 	$order: z.string().default("inspection_date DESC").optional(),
 	$where: z.string().optional(),
+	// Request only marker-optimized fields for map rendering. Accept boolean or string flags in query.
+	markerOnly: z
+		.union([z.boolean(), z.literal("1"), z.literal("true")])
+		.optional(),
 });
 
 // API response schema: always an array of restaurant objects

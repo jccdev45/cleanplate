@@ -1,16 +1,67 @@
-import { useSearch } from "@tanstack/react-router";
-import L from "leaflet";
-import { MapContainer, Marker, Popup, TileLayer } from "react-leaflet";
-import "leaflet/dist/leaflet.css";
 import { Badge } from "@/components/ui/badge";
 import type { Restaurant } from "@/types/restaurant";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate, useSearch } from "@tanstack/react-router";
+import L from "leaflet";
 import { UtensilsCrossed } from "lucide-react";
+import { useRef } from "react";
+import {
+	MapContainer,
+	Marker,
+	Popup,
+	TileLayer,
+	useMapEvents,
+} from "react-leaflet";
 import MarkerClusterGroup from "react-leaflet-cluster";
 
-interface RestaurantMapProps {
-	restaurants: Restaurant[];
+function MapBoundsUpdater() {
+	const navigate = useNavigate({ from: "/map" });
+	const debounceRef = useRef<number | null>(null);
+	const currentSearch = useSearch({ from: "/map" });
+
+	useMapEvents({
+		load: (e) => {
+			try {
+				const b = (e.target as L.Map).getBounds();
+				navigate({
+					search: (prev) => ({
+						...(prev || currentSearch || {}),
+						minLat: b.getSouth(),
+						maxLat: b.getNorth(),
+						minLng: b.getWest(),
+						maxLng: b.getEast(),
+						markerOnly: "1",
+					}),
+				});
+			} catch (err) {
+				// ignore
+			}
+		},
+		moveend: (e) => {
+			if (debounceRef.current) window.clearTimeout(debounceRef.current);
+			debounceRef.current = window.setTimeout(() => {
+				try {
+					const b = (e.target as L.Map).getBounds();
+					navigate({
+						search: (prev) => ({
+							...(prev || currentSearch || {}),
+							minLat: b.getSouth(),
+							maxLat: b.getNorth(),
+							minLng: b.getWest(),
+							maxLng: b.getEast(),
+							markerOnly: "1",
+						}),
+					});
+				} catch (err) {
+					// ignore
+				}
+			}, 250) as unknown as number;
+		},
+	});
+
+	return null;
 }
+
+type RestaurantMapProps = { restaurants: Restaurant[] };
 
 export function RestaurantMap({ restaurants }: RestaurantMapProps) {
 	const searchParams = useSearch({ from: "/map" });
@@ -54,6 +105,7 @@ export function RestaurantMap({ restaurants }: RestaurantMapProps) {
 			className="w-full h-full rounded-lg shadow-lg z-0"
 			style={{ minHeight: "60vh", maxHeight: "80vh" }}
 		>
+			<MapBoundsUpdater />
 			<TileLayer
 				attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
 				url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -97,14 +149,13 @@ export function RestaurantMap({ restaurants }: RestaurantMapProps) {
 										<Badge
 											variant={
 												r.inspections[0]?.grade === "A"
-													? "default"
+													? "success"
 													: r.inspections[0]?.grade === "B"
 														? "secondary"
 														: r.inspections[0]?.grade === "C"
 															? "destructive"
 															: "outline"
 											}
-											className="text-xs px-2 py-1"
 										>
 											Grade: {r.inspections[0]?.grade || "N/A"}
 										</Badge>

@@ -33,6 +33,10 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 				rel: "stylesheet",
 				href: appCss,
 			},
+			{
+				rel: "stylesheet",
+				href: "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css",
+			},
 		],
 	}),
 

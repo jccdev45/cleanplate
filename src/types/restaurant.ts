@@ -10,6 +10,8 @@ export interface RestaurantBase {
 	cuisine_description?: string;
 	latitude?: string;
 	longitude?: string;
+	// Optional precomputed single-line address for compact marker DTOs
+	address?: string;
 	community_board?: string;
 	council_district?: string;
 	census_tract?: string;

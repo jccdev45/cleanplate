@@ -18,7 +18,6 @@ function MapPage() {
 	const { data, error, isFetching, isLoading } = useQuery(
 		restaurantQueries.list({
 			...searchParams,
-			// $limit: 5000,
 		}),
 	);
 
@@ -114,12 +113,12 @@ function MapPage() {
 
 		return (
 			<div className="flex flex-wrap gap-2 justify-center text-sm">
-				{filters.map((f) => (
+				{filters.map((filt) => (
 					<Badge
-						key={f.label}
+						key={filt.label}
 						variant={
-							f.variant
-								? (f.variant as
+							filt.variant
+								? (filt.variant as
 										| "default"
 										| "secondary"
 										| "destructive"
@@ -127,7 +126,7 @@ function MapPage() {
 								: "default"
 						}
 					>
-						{f.label}: <span>{f.value}</span>
+						{filt.label}: <span>{filt.value}</span>
 					</Badge>
 				))}
 			</div>

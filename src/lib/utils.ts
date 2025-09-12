@@ -35,6 +35,12 @@ export function groupRestaurants(data: RestaurantRaw[]): Restaurant[] {
 				boro: row.boro,
 				building: row.building,
 				street: row.street,
+				address:
+					typeof (row as Record<string, unknown>).address === "string"
+						? ((row as unknown as Record<string, string>).address as string)
+						: row.building && row.street
+							? `${row.building} ${row.street}`
+							: undefined,
 				zipcode: row.zipcode,
 				phone: row.phone,
 				cuisine_description: row.cuisine_description,
@@ -80,6 +86,20 @@ export function groupRestaurants(data: RestaurantRaw[]): Restaurant[] {
 				violations: [],
 			};
 			restaurant.inspections.push(inspection);
+		} else {
+			// If the inspection object already exists (multiple rows for the
+			// same inspection), merge any missing/undefined fields from the
+			// current row. Socrata often returns one row per violation which
+			// can cause grade/critical_flag to appear on different rows.
+			// Ensure we don't lose data depending on row order by filling in
+			// fields that are currently undefined.
+			inspection.action = inspection.action ?? row.action;
+			inspection.critical_flag = inspection.critical_flag ?? row.critical_flag;
+			inspection.score = inspection.score ?? row.score;
+			inspection.grade = inspection.grade ?? row.grade;
+			inspection.grade_date = inspection.grade_date ?? row.grade_date;
+			inspection.inspection_type =
+				inspection.inspection_type ?? row.inspection_type;
 		}
 		// Add violation to inspection, if present and not already in list
 		if (violation) {

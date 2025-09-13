@@ -66,8 +66,27 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 		],
 	}),
 
+	notFoundComponent: NotFoundComponent,
 	shellComponent: RootDocument,
 });
+
+function NotFoundComponent() {
+	return (
+		<main className="min-h-[60vh] flex items-center justify-center px-4">
+			<div className="text-center">
+				<h1 className="text-4xl font-extrabold mb-2">404 — Page not found</h1>
+				<p className="text-muted-foreground mb-4">
+					The page you were looking for does not exist or has been moved.
+				</p>
+				<div className="flex items-center justify-center gap-2">
+					<a href="/" className="underline text-primary">
+						Go back home
+					</a>
+				</div>
+			</div>
+		</main>
+	);
+}
 
 function RootDocument({ children }: { children: React.ReactNode }) {
 	return (

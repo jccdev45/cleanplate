@@ -67,18 +67,29 @@ export function NavMenu() {
 		},
 	];
 
-	const [isDark, setIsDark] = React.useState(() =>
-		typeof window !== "undefined"
-			? localStorage.getItem("theme") === "dark"
-			: false,
-	);
+	// Initialize deterministically (match server render). Read persisted theme on mount.
+	const [isDark, setIsDark] = React.useState<boolean>(false);
 
 	React.useEffect(() => {
 		if (typeof document === "undefined") return;
-		document.documentElement.classList.toggle("dark", isDark);
+		try {
+			const stored = localStorage.getItem("theme") === "dark";
+			setIsDark(stored);
+			document.documentElement.classList.toggle("dark", stored);
+		} catch {
+			// ignore
+		}
+	}, []);
+
+	// Persist changes to theme
+	React.useEffect(() => {
 		try {
 			localStorage.setItem("theme", isDark ? "dark" : "light");
 		} catch {}
+
+		if (typeof document !== "undefined") {
+			document.documentElement.classList.toggle("dark", isDark);
+		}
 	}, [isDark]);
 
 	return (

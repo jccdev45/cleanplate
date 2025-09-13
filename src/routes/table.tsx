@@ -1,6 +1,14 @@
+import { DefaultLoader } from "@/components/default-loader";
 import { columns } from "@/components/table/columns";
 import { DataTable } from "@/components/table/data-table";
+import {
+	Accordion,
+	AccordionContent,
+	AccordionItem,
+	AccordionTrigger,
+} from "@/components/ui/accordion";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SITE_NAME } from "@/lib/constants";
 import { restaurantSearchParamsSchema } from "@/schema/schema";
@@ -8,7 +16,11 @@ import type { Restaurant } from "@/types/restaurant";
 import { restaurantQueries } from "@/utils/restaurant";
 import { rankItem } from "@tanstack/match-sorter-utils";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
+import {
+	ErrorComponent,
+	type ErrorComponentProps,
+	createFileRoute,
+} from "@tanstack/react-router";
 import type { FilterFn } from "@tanstack/react-table";
 import { AlertCircleIcon } from "lucide-react";
 import { useState } from "react";
@@ -16,7 +28,12 @@ import { useState } from "react";
 const SITE_URL = process.env.SITE_URL ?? "";
 
 export const Route = createFileRoute("/table")({
-	component: TableRoute,
+	loader: async ({ context }) => {
+		// Prefetch the restaurant list data on the server
+		await context.queryClient.ensureQueryData(
+			restaurantQueries.list({ $limit: 5000 }),
+		);
+	},
 	validateSearch: (search) => restaurantSearchParamsSchema.parse(search),
 	head: () => ({
 		meta: [
@@ -44,6 +61,8 @@ export const Route = createFileRoute("/table")({
 			...(SITE_URL ? [{ rel: "canonical", href: `${SITE_URL}/table` }] : []),
 		],
 	}),
+	errorComponent: TableErrorComponent,
+	component: TableRoute,
 });
 
 const fuzzyFilter: FilterFn<Restaurant> = (row, columnId, value, addMeta) => {
@@ -57,17 +76,18 @@ function TableRoute() {
 
 	const [globalFilter, setGlobalFilter] = useState(searchParams?.$q || "");
 
-	const { data, error, isFetching } = useSuspenseQuery(
+	const { data, isLoading, isError, isFetching } = useSuspenseQuery(
 		restaurantQueries.list({
 			...searchParams,
-			$limit: 5000,
+			// $limit: 5000,
 		}),
 	);
 
+	if (isLoading) return <DefaultLoader text="Loading table data..." />;
+	if (isError || !data) throw new Error("Failed to load table data");
+
 	const restaurants: Restaurant[] = data?.restaurants ?? [];
 	const totalCount = data?.count ?? 0;
-
-	if (error) return <div>Error loading data.</div>;
 
 	return (
 		<div className="min-h-screen p-6 space-y-2">
@@ -85,6 +105,7 @@ function TableRoute() {
 				type="text"
 				className="w-full"
 			/>
+
 			<DataTable
 				columns={columns}
 				data={restaurants}
@@ -94,6 +115,49 @@ function TableRoute() {
 				fuzzyFilter={fuzzyFilter}
 				totalCount={totalCount}
 			/>
+		</div>
+	);
+}
+
+function TableErrorComponent({ error }: ErrorComponentProps) {
+	return (
+		<div className="min-h-screen p-6 space-y-4">
+			<ErrorComponent error={error} />
+			<Alert variant="destructive">
+				<AlertCircleIcon />
+				<div className="flex flex-col">
+					<AlertTitle>Unable to load table</AlertTitle>
+					<AlertDescription>
+						We had trouble loading restaurant inspection data. You can try again
+						or check your connection. If the problem persists, contact support.
+					</AlertDescription>
+					<div className="mt-3 flex flex-col items-center gap-2">
+						{/* <Button type="button" size="sm" onClick={() => refetch()}>
+							Retry
+						</Button> */}
+						<Accordion
+							className="text-xs text-muted-foreground"
+							type="single"
+							collapsible
+						>
+							<AccordionItem value="technical-details">
+								<Button variant="outline" asChild>
+									<AccordionTrigger className="cursor-pointer">
+										Technical Details
+									</AccordionTrigger>
+								</Button>
+								<AccordionContent>
+									<pre className="whitespace-pre-wrap mt-2 text-[12px]">
+										{error instanceof Error
+											? error.message
+											: JSON.stringify(error, null, 2)}
+									</pre>
+								</AccordionContent>
+							</AccordionItem>
+						</Accordion>
+					</div>
+				</div>
+			</Alert>
 		</div>
 	);
 }

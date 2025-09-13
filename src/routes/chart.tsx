@@ -4,6 +4,7 @@ import { CuisineBarChart } from "@/components/charts/cuisine-bar-chart";
 import { CuisineTrendsAreaChart } from "@/components/charts/cuisine-trends-area-chart";
 import { GradePieChart } from "@/components/charts/grade-pie-chart";
 import { ScoreBarChart } from "@/components/charts/score-bar-chart";
+import { DefaultLoader } from "@/components/default-loader";
 import {
 	Card,
 	CardContent,
@@ -14,14 +15,22 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SITE_NAME } from "@/lib/constants";
 import { restaurantQueries } from "@/utils/restaurant";
-import { useQuery } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
+import { useSuspenseQuery } from "@tanstack/react-query";
+import {
+	ErrorComponent,
+	type ErrorComponentProps,
+	createFileRoute,
+} from "@tanstack/react-router";
 
 const SITE_URL = process.env.SITE_URL ?? "";
 
 export const Route = createFileRoute("/chart")({
-	component: RouteComponent,
-	ssr: "data-only",
+	loader: async ({ context }) => {
+		// Prefetch the restaurant list data on the server
+		await context.queryClient.ensureQueryData(
+			restaurantQueries.list({ $limit: 5000 }),
+		);
+	},
 	head: () => ({
 		meta: [
 			{ title: `Charts | ${SITE_NAME}` },
@@ -48,18 +57,18 @@ export const Route = createFileRoute("/chart")({
 			...(SITE_URL ? [{ rel: "canonical", href: `${SITE_URL}/chart` }] : []),
 		],
 	}),
+
+	errorComponent: ChartErrorComponent,
+	component: RouteComponent,
 });
 
 function RouteComponent() {
-	const { data, isLoading, isError } = useQuery(
+	const { data, isLoading, isError } = useSuspenseQuery(
 		restaurantQueries.list({ $limit: 5000 }),
 	);
 
-	if (isLoading) return <div className="p-8">Loading chart...</div>;
-	if (isError || !data)
-		return (
-			<div className="p-8 text-red-600">Failed to load restaurant data.</div>
-		);
+	if (isLoading) return <DefaultLoader text="Loading chart data..." />;
+	if (isError || !data) throw new Error("Failed to load chart data");
 
 	const cuisineCounts: Record<string, number> = {};
 	const boroughCounts: Record<string, number> = {};
@@ -233,5 +242,19 @@ function RouteComponent() {
 				</Tabs>
 			</section>
 		</main>
+	);
+}
+
+function ChartErrorComponent({ error }: ErrorComponentProps) {
+	return (
+		<div className="min-h-screen p-6 space-y-4">
+			<ErrorComponent error={error} />
+			<div className="mt-3 flex flex-col items-center gap-2">
+				<p className="text-muted-foreground">
+					We had trouble loading the chart data. You can try again or check your
+					connection. If the problem persists, contact support.
+				</p>
+			</div>
+		</div>
 	);
 }

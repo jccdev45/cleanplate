@@ -1,3 +1,4 @@
+import { DefaultCatchBoundary } from "@/components/default-catch-boundary";
 import { Footer } from "@/components/footer.tsx";
 import { NavMenu } from "@/components/nav-menu.tsx";
 import TanStackQueryLayout from "@/integrations/tanstack-query/layout.tsx";
@@ -39,11 +40,6 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 		],
 		links: [
 			{
-				rel: "apple-touch-icon",
-				sizes: "180x180",
-				href: "/apple-touch-icon.png",
-			},
-			{
 				rel: "icon",
 				type: "image/png",
 				sizes: "32x32",
@@ -55,7 +51,7 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 				sizes: "16x16",
 				href: "/favicon-16x16.png",
 			},
-			{ rel: "manifest", href: "/site.webmanifest" },
+			{ rel: "manifest", href: "/manifest.json" },
 			{ rel: "icon", href: "/favicon.ico" },
 			{ rel: "stylesheet", href: appCss },
 			{
@@ -67,6 +63,7 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 	}),
 
 	notFoundComponent: NotFoundComponent,
+	errorComponent: DefaultCatchBoundary,
 	shellComponent: RootDocument,
 });
 

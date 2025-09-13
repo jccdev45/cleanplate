@@ -1,17 +1,29 @@
+import { DefaultLoader } from "@/components/default-loader";
 import { MapFilters } from "@/components/map/map-filters";
 import { RestaurantMap } from "@/components/map/restaurant-map";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { SITE_NAME } from "@/lib/constants";
 import { GRADES, restaurantSearchParamsSchema } from "@/schema/schema";
 import { restaurantQueries } from "@/utils/restaurant";
 import { useQuery } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
+import {
+	ErrorComponent,
+	type ErrorComponentProps,
+	Link,
+	createFileRoute,
+} from "@tanstack/react-router";
 import { Loader2 } from "lucide-react";
 
 const SITE_URL = process.env.SITE_URL ?? "";
 
 export const Route = createFileRoute("/map")({
-	component: MapPage,
+	loader: async ({ context }) => {
+		// Prefetch the restaurant list data on the server
+		await context.queryClient.prefetchQuery(
+			restaurantQueries.list({ $limit: 1000 }),
+		);
+	},
 	validateSearch: (search) => restaurantSearchParamsSchema.parse(search),
 	ssr: "data-only",
 	head: () => ({
@@ -40,15 +52,21 @@ export const Route = createFileRoute("/map")({
 			...(SITE_URL ? [{ rel: "canonical", href: `${SITE_URL}/map` }] : []),
 		],
 	}),
+
+	errorComponent: MapErrorComponent,
+	component: MapPage,
 });
 
 function MapPage() {
 	const searchParams = Route.useSearch();
-	const { data, error, isFetching, isLoading } = useQuery(
+	const { data, isError, isFetching, isLoading } = useQuery(
 		restaurantQueries.list({
 			...searchParams,
 		}),
 	);
+
+	if (isLoading) return <DefaultLoader text="Loading map data..." />;
+	if (isError || !data) throw new Error("Failed to load map data");
 
 	return (
 		<div className="flex flex-col h-[calc(100vh-64px)]">
@@ -62,25 +80,10 @@ function MapPage() {
 				</div>
 			</div>
 			<main className="flex-grow relative">
-				{/* Initial Load: Full overlay */}
-				{isLoading && (
-					<div className="absolute inset-0 size-full bg-white/70 z-50 flex items-center justify-center">
-						<Loader2 className="size-12 animate-spin text-primary" />
-					</div>
-				)}
-
 				{/* Refetching: Subtle indicator */}
 				{isFetching && !isLoading && (
 					<div className="absolute top-4 right-4 z-50 bg-white/80 p-2 rounded-full shadow-lg">
 						<Loader2 className="size-6 animate-spin text-primary" />
-					</div>
-				)}
-
-				{error && (
-					<div className="absolute inset-0 bg-white/50 z-50 flex items-center justify-center">
-						<span className="bg-destructive/60 p-2 rounded text-destructive-foreground">
-							Error loading map data
-						</span>
 					</div>
 				)}
 				<RestaurantMap restaurants={data?.restaurants || []} />
@@ -161,4 +164,21 @@ function MapPage() {
 			</div>
 		);
 	}
+}
+
+function MapErrorComponent({ error }: ErrorComponentProps) {
+	return (
+		<div className="min-h-screen p-6 space-y-4">
+			<ErrorComponent error={error} />
+			<div className="mt-3 flex flex-col items-center gap-2">
+				<p className="text-muted-foreground">
+					We had trouble loading the map. You can try again or check your
+					connection. If the problem persists, contact support.
+				</p>
+				<Button asChild variant="link">
+					<Link to="/map">Try Again</Link>
+				</Button>
+			</div>
+		</div>
+	);
 }

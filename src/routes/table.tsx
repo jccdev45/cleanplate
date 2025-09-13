@@ -2,6 +2,7 @@ import { columns } from "@/components/table/columns";
 import { DataTable } from "@/components/table/data-table";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
+import { SITE_NAME } from "@/lib/constants";
 import { restaurantSearchParamsSchema } from "@/schema/schema";
 import type { Restaurant } from "@/types/restaurant";
 import { restaurantQueries } from "@/utils/restaurant";
@@ -12,9 +13,37 @@ import type { FilterFn } from "@tanstack/react-table";
 import { AlertCircleIcon } from "lucide-react";
 import { useState } from "react";
 
+const SITE_URL = process.env.SITE_URL ?? "";
+
 export const Route = createFileRoute("/table")({
 	component: TableRoute,
 	validateSearch: (search) => restaurantSearchParamsSchema.parse(search),
+	head: () => ({
+		meta: [
+			{ title: `Table | ${SITE_NAME}` },
+			{
+				name: "description",
+				content:
+					"Browse the full dataset of NYC restaurant inspections in a searchable table. Filter and export results.",
+			},
+			{ property: "og:title", content: `Table | ${SITE_NAME}` },
+			{
+				property: "og:description",
+				content:
+					"Browse the full dataset of NYC restaurant inspections in a searchable table. Filter and export results.",
+			},
+			{
+				property: "og:image",
+				content: SITE_URL
+					? `${SITE_URL}/images/nathans.jpg`
+					: "/images/nathans.jpg",
+			},
+			{ name: "twitter:card", content: "summary_large_image" },
+		],
+		links: [
+			...(SITE_URL ? [{ rel: "canonical", href: `${SITE_URL}/table` }] : []),
+		],
+	}),
 });
 
 const fuzzyFilter: FilterFn<Restaurant> = (row, columnId, value, addMeta) => {

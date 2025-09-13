@@ -11,20 +11,52 @@ import {
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+	SITE_DEFAULT_DESCRIPTION,
+	SITE_DEFAULT_OG_IMAGE,
+	SITE_NAME,
+} from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { restaurantQueries } from "@/utils/restaurant";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { FunnelX, MapPinned } from "lucide-react";
 
+const SITE_URL = process.env.SITE_URL ?? "";
+
 export const Route = createFileRoute("/restaurant/$camis")({
 	component: RouteComponent,
 	loader: ({ context: { queryClient }, params: { camis } }) => {
 		return queryClient.ensureQueryData(restaurantQueries.detail(camis));
 	},
-	head: ({ loaderData }) => ({
-		meta: loaderData ? [{ title: loaderData.restaurants[0].dba }] : undefined,
-	}),
+	head: ({ loaderData, params }) => {
+		const d = loaderData?.restaurants?.[0];
+		const title = d ? `${d.dba} | ${SITE_NAME}` : `Restaurant | ${SITE_NAME}`;
+		const description = d
+			? `${d.dba} in ${d.boro}. Latest grade: ${d.inspections?.[0]?.grade ?? "N/A"}. View inspection history and violations.`
+			: SITE_DEFAULT_DESCRIPTION;
+		const url = SITE_URL ? `${SITE_URL}/restaurant/${params.camis}` : undefined;
+		const image = SITE_URL
+			? `${SITE_URL}${SITE_DEFAULT_OG_IMAGE}`
+			: SITE_DEFAULT_OG_IMAGE;
+
+		return {
+			meta: [
+				{ title },
+				{ name: "description", content: description },
+				{ property: "og:title", content: title },
+				{ property: "og:description", content: description },
+				{ property: "og:image", content: image },
+				{ property: "og:type", content: "website" },
+				{ name: "twitter:card", content: "summary_large_image" },
+				{ name: "twitter:title", content: title },
+				{ name: "twitter:description", content: description },
+				{ name: "twitter:image", content: image },
+				...(url ? [{ property: "og:url", content: url }] : []),
+			],
+			links: [...(url ? [{ rel: "canonical", href: url }] : [])],
+		};
+	},
 	validateSearch: (search) => search, // Allow any search params
 });
 

@@ -1,16 +1,45 @@
 import { MapFilters } from "@/components/map-filters";
 import { RestaurantMap } from "@/components/restaurant-map";
 import { Badge } from "@/components/ui/badge";
+import { SITE_NAME } from "@/lib/constants";
 import { GRADES, restaurantSearchParamsSchema } from "@/schema/schema";
 import { restaurantQueries } from "@/utils/restaurant";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { Loader2 } from "lucide-react";
 
+const SITE_URL = process.env.SITE_URL ?? "";
+
 export const Route = createFileRoute("/map")({
 	component: MapPage,
 	validateSearch: (search) => restaurantSearchParamsSchema.parse(search),
 	ssr: "data-only",
+	head: () => ({
+		meta: [
+			{ title: `Map | ${SITE_NAME}` },
+			{
+				name: "description",
+				content:
+					"Interactive map of NYC restaurant inspection results. Filter by grade, borough, and inspection date.",
+			},
+			{ property: "og:title", content: `Map | ${SITE_NAME}` },
+			{
+				property: "og:description",
+				content:
+					"Interactive map of NYC restaurant inspection results. Filter by grade, borough, and inspection date.",
+			},
+			{
+				property: "og:image",
+				content: SITE_URL
+					? `${SITE_URL}/images/chinatown.jpg`
+					: "/images/chinatown.jpg",
+			},
+			{ name: "twitter:card", content: "summary_large_image" },
+		],
+		links: [
+			...(SITE_URL ? [{ rel: "canonical", href: `${SITE_URL}/map` }] : []),
+		],
+	}),
 });
 
 function MapPage() {

@@ -60,7 +60,7 @@ export const restaurantSearchParamsSchema = z.object({
 	minLng: z.number().optional(),
 	maxLng: z.number().optional(),
 	$group: z.string().optional(),
-	$limit: z.number().max(10000).default(1000).optional(),
+	$limit: z.number().max(10000).optional(),
 	$offset: z.number().default(0).optional(),
 	$q: z.string().optional(),
 	$order: z.string().default("inspection_date DESC").optional(),

@@ -12,13 +12,42 @@ import {
 	CardTitle,
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { SITE_NAME } from "@/lib/constants";
 import { restaurantQueries } from "@/utils/restaurant";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 
+const SITE_URL = process.env.SITE_URL ?? "";
+
 export const Route = createFileRoute("/chart")({
 	component: RouteComponent,
 	ssr: "data-only",
+	head: () => ({
+		meta: [
+			{ title: `Charts | ${SITE_NAME}` },
+			{
+				name: "description",
+				content:
+					"Visual dashboard for NYC restaurant inspection trends by borough, cuisine, and score.",
+			},
+			{ property: "og:title", content: `Charts | ${SITE_NAME}` },
+			{
+				property: "og:description",
+				content:
+					"Visual dashboard for NYC restaurant inspection trends by borough, cuisine, and score.",
+			},
+			{
+				property: "og:image",
+				content: SITE_URL
+					? `${SITE_URL}/images/cosmic-diner.jpg`
+					: "/images/cosmic-diner.jpg",
+			},
+			{ name: "twitter:card", content: "summary_large_image" },
+		],
+		links: [
+			...(SITE_URL ? [{ rel: "canonical", href: `${SITE_URL}/chart` }] : []),
+		],
+	}),
 });
 
 function RouteComponent() {

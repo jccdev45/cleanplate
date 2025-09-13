@@ -34,6 +34,28 @@ export const HERO_IMAGES = [
 	},
 ];
 
+export const TESTIMONIALS = [
+	{
+		imageInitial: "J",
+		fallback: "JL",
+		quote:
+			"“Clean Plate helped me find safe places to eat for my family. Super easy to use!”",
+		author: "— Jamie L.",
+	},
+	{
+		imageInitial: "A",
+		fallback: "AP",
+		quote: "“I love the up-to-date info. I check before every dinner out!”",
+		author: "— Alex P.",
+	},
+	{
+		imageInitial: "P",
+		fallback: "PS",
+		quote: "“The design is beautiful and the data is trustworthy.”",
+		author: "— Priya S.",
+	},
+];
+
 export const CHART_CONFIG = {
 	count: {
 		label: "Restaurants",
@@ -57,3 +79,9 @@ export const CHART_CONFIG = {
 	Z: { label: "Grade Z", color: "var(--chart-5)" },
 	"N/A": { label: "Not Graded", color: "var(--chart-6)" },
 } satisfies ChartConfig;
+
+// Site-wide SEO defaults
+export const SITE_NAME = "Cleanplate";
+export const SITE_DEFAULT_DESCRIPTION =
+	"Explore NYC restaurant inspection results, grades, and inspection history. Search by name, cuisine, or location.";
+export const SITE_DEFAULT_OG_IMAGE = "/logo512.png";

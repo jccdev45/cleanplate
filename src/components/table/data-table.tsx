@@ -69,7 +69,7 @@ export function DataTable<TData, TValue>({
 		onColumnFiltersChange: setColumnFilters,
 		onGlobalFilterChange: onGlobalFilterChange,
 		onPaginationChange: setPagination,
-		globalFilterFn: fuzzyFilter ? "fuzzy" : undefined,
+		globalFilterFn: fuzzyFilter ?? undefined,
 		getCoreRowModel: getCoreRowModel(),
 		getFilteredRowModel: getFilteredRowModel(),
 		getSortedRowModel: getSortedRowModel(),

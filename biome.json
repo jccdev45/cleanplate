@@ -23,7 +23,7 @@
 			"recommended": true,
 			"style": {
 				"useFilenamingConvention": {
-					"level": "error",
+					"level": "off",
 					"options": {
 						"filenameCases": ["kebab-case"]
 					}

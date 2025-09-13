@@ -90,9 +90,13 @@ function NotFoundComponent() {
 
 function RootDocument({ children }: { children: React.ReactNode }) {
 	return (
-		<html lang="en">
+		<html lang="en" suppressHydrationWarning>
 			<head>
 				<HeadContent />
+				{/* Pre-hydration script: apply saved theme (dark) before CSS loads to avoid flash */}
+				<script>
+					{`try{(function(){var k='theme';var s=null;try{s=localStorage.getItem(k)}catch(e){}if(s==='dark'){document.documentElement.classList.add('dark');}else if(s==='light'){document.documentElement.classList.remove('dark')}else{try{if(window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches){document.documentElement.classList.add('dark')}}catch(e){}}})()}catch(e){};`}
+				</script>
 			</head>
 			<body>
 				<NavMenu />

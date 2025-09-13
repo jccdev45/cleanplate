@@ -67,21 +67,17 @@ export function NavMenu() {
 		},
 	];
 
-	// Initialize deterministically (match server render). Read persisted theme on mount.
-	const [isDark, setIsDark] = React.useState<boolean>(false);
-
-	React.useEffect(() => {
-		if (typeof document === "undefined") return;
+	// Initialize from localStorage on the client so the initial React render
+	// matches the pre-hydration script that sets the same class on <html>.
+	const [isDark, setIsDark] = React.useState<boolean>(() => {
 		try {
-			const stored = localStorage.getItem("theme") === "dark";
-			setIsDark(stored);
-			document.documentElement.classList.toggle("dark", stored);
+			return localStorage.getItem("theme") === "dark";
 		} catch {
-			// ignore
+			return false;
 		}
-	}, []);
+	});
 
-	// Persist changes to theme
+	// Persist changes to theme and update document class
 	React.useEffect(() => {
 		try {
 			localStorage.setItem("theme", isDark ? "dark" : "light");
@@ -122,7 +118,11 @@ export function NavMenu() {
 						onClick={() => setIsDark((s) => !s)}
 						variant="outline"
 					>
-						{isDark ? <Sun className="size-5" /> : <Moon className="size-5" />}
+						{/* Render both icons so the server markup matches the client markup.
+							Visibility is controlled purely by CSS (dark: utilities). */}
+						<Sun className="size-5 scale-100 rotate-0 transition-all dark:scale-0 dark:-rotate-90" />
+						<Moon className="absolute size-5 scale-0 rotate-90 transition-all dark:scale-100 dark:rotate-0" />
+						<span className="sr-only">Toggle theme</span>
 					</Button>
 
 					<Sheet>

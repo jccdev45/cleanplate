@@ -20,14 +20,20 @@ import {
 } from "@/components/ui/carousel";
 import { WorstRestaurants } from "@/components/worst-restaurants";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { HERO_IMAGES } from "@/lib/constants";
+import {
+	HERO_IMAGES,
+	SITE_DEFAULT_DESCRIPTION,
+	TESTIMONIALS,
+} from "@/lib/constants";
 import { restaurantQueries } from "@/utils/restaurant";
+import seo from "@/utils/seo";
 import {
 	ErrorComponent,
 	type ErrorComponentProps,
 	createFileRoute,
 } from "@tanstack/react-router";
 import { CalendarSync, MapIcon, ShieldCheck, TextSearch } from "lucide-react";
+const SITE_URL = process.env.SITE_URL ?? "";
 
 export const Route = createFileRoute("/")({
 	loader: async ({ context }) => {
@@ -62,33 +68,25 @@ export const Route = createFileRoute("/")({
 			</AlertDescription>
 		</Alert>
 	),
+	head: () => ({
+		meta: [
+			...seo({
+				title: "Explore NYC restaurant inspections",
+				description: SITE_DEFAULT_DESCRIPTION,
+				image: SITE_URL
+					? `${SITE_URL}/images/sidewalk-dining.jpg`
+					: "/images/sidewalk-dining.jpg",
+				url: SITE_URL ? `${SITE_URL}/` : undefined,
+			}),
+			{ name: "twitter:card", content: "summary_large_image" },
+		],
+		links: [...(SITE_URL ? [{ rel: "canonical", href: `${SITE_URL}/` }] : [])],
+	}),
 });
 
 function IndexErrorComponent({ error }: ErrorComponentProps) {
 	return <ErrorComponent error={error} />;
 }
-
-const TESTIMONIALS = [
-	{
-		imageInitial: "J",
-		fallback: "JL",
-		quote:
-			"“Clean Plate helped me find safe places to eat for my family. Super easy to use!”",
-		author: "— Jamie L.",
-	},
-	{
-		imageInitial: "A",
-		fallback: "AP",
-		quote: "“I love the up-to-date info. I check before every dinner out!”",
-		author: "— Alex P.",
-	},
-	{
-		imageInitial: "P",
-		fallback: "PS",
-		quote: "“The design is beautiful and the data is trustworthy.”",
-		author: "— Priya S.",
-	},
-];
 
 function App() {
 	const isMobile = useIsMobile();

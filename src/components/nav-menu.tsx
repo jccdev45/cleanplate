@@ -1,3 +1,5 @@
+// TODO: Add search bar with result display dropdown
+
 import { Button } from "@/components/ui/button";
 import {
 	Sheet,
@@ -8,6 +10,7 @@ import {
 	SheetTitle,
 	SheetTrigger,
 } from "@/components/ui/sheet";
+import { SITE_NAME } from "@/lib/constants";
 import { Link } from "@tanstack/react-router";
 import {
 	ChartBarIcon,
@@ -35,7 +38,7 @@ export function NavMenu() {
 	const LINKS = [
 		{
 			to: "/",
-			label: "Cleanplate",
+			label: SITE_NAME,
 			icon: LogoIcon,
 			className: "space-x-2 flex items-center",
 			activeClassName: "underline decoration-primary underline-offset-4",
@@ -94,7 +97,9 @@ export function NavMenu() {
 				<div className="flex items-center gap-3">
 					<Link to="/" className="flex items-center space-x-2 font-bold">
 						<LogoIcon />
-						<span className="hidden sm:inline text-foreground">Cleanplate</span>
+						<span className="hidden sm:inline text-foreground">
+							{SITE_NAME}
+						</span>
 					</Link>
 				</div>
 
@@ -141,7 +146,7 @@ export function NavMenu() {
 								<SheetTitle className="flex items-center gap-2">
 									<LogoIcon />
 									<strong className="text-primary font-extrabold tracking-wider text-lg uppercase">
-										Cleanplate
+										{SITE_NAME}
 									</strong>
 								</SheetTitle>
 							</SheetHeader>
@@ -159,7 +164,7 @@ export function NavMenu() {
 								))}
 							</nav>
 							<SheetFooter className="mt-auto font-bold text-center flex-row justify-center items-center gap-2">
-								<CopyrightIcon /> {new Date().getFullYear()} Cleanplate
+								<CopyrightIcon /> {new Date().getFullYear()} {SITE_NAME}
 							</SheetFooter>
 						</SheetContent>
 					</Sheet>

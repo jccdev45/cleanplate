@@ -1,5 +1,16 @@
 import type { ChartConfig } from "@/components/ui/chart";
-import { MonitorIcon } from "lucide-react";
+import {
+	CalendarSync,
+	MonitorIcon,
+	ShieldCheck,
+	TextSearch,
+} from "lucide-react";
+
+// Site-wide SEO defaults
+export const SITE_NAME = "CleanPlate";
+export const SITE_DEFAULT_DESCRIPTION =
+	"Explore NYC restaurant inspection results, grades, and inspection history. Search by name, cuisine, or location.";
+export const SITE_DEFAULT_OG_IMAGE = "/logo512.png";
 
 export const HERO_IMAGES = [
 	{
@@ -38,21 +49,26 @@ export const TESTIMONIALS = [
 	{
 		imageInitial: "J",
 		fallback: "JL",
-		quote:
-			"“Clean Plate helped me find safe places to eat for my family. Super easy to use!”",
-		author: "— Jamie L.",
+		quote: `“${SITE_NAME} helped me find safe places to eat for my family. Super easy to use!”`,
+		author: "Jamie L.",
 	},
 	{
 		imageInitial: "A",
 		fallback: "AP",
 		quote: "“I love the up-to-date info. I check before every dinner out!”",
-		author: "— Alex P.",
+		author: "Alex P.",
 	},
 	{
 		imageInitial: "P",
 		fallback: "PS",
 		quote: "“The design is beautiful and the data is trustworthy.”",
-		author: "— Priya S.",
+		author: "Priya S.",
+	},
+	{
+		imageInitial: "M",
+		fallback: "MB",
+		quote: `“${SITE_NAME} is my go-to for finding safe dining options!”`,
+		author: "Michael B.",
 	},
 ];
 
@@ -80,8 +96,23 @@ export const CHART_CONFIG = {
 	"N/A": { label: "Not Graded", color: "var(--chart-6)" },
 } satisfies ChartConfig;
 
-// Site-wide SEO defaults
-export const SITE_NAME = "Cleanplate";
-export const SITE_DEFAULT_DESCRIPTION =
-	"Explore NYC restaurant inspection results, grades, and inspection history. Search by name, cuisine, or location.";
-export const SITE_DEFAULT_OG_IMAGE = "/logo512.png";
+export const FEATURE_ITEMS = [
+	{
+		icon: ShieldCheck,
+		title: "Verified Data",
+		description:
+			"All inspection results are sourced directly from NYC Health Department.",
+	},
+	{
+		icon: CalendarSync,
+		title: "Up-to-Date",
+		description:
+			"We update our listings regularly so you always have the latest info.",
+	},
+	{
+		icon: TextSearch,
+		title: "Easy to Use",
+		description:
+			"Search, filter, and explore restaurants with a clean, modern interface.",
+	},
+];

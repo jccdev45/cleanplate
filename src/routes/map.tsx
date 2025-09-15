@@ -11,8 +11,9 @@ import {
 	type RestaurantSearchParams,
 	restaurantSearchParamsSchema,
 } from "@/schema/schema";
+import { normalizeParams } from "@/utils/normalize-params";
 import { restaurantQueries } from "@/utils/restaurant";
-import { useInfiniteQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import {
 	ErrorComponent,
 	type ErrorComponentProps,
@@ -20,6 +21,7 @@ import {
 	createFileRoute,
 } from "@tanstack/react-router";
 import { Loader2 } from "lucide-react";
+import React from "react";
 
 const SITE_URL = process.env.SITE_URL ?? "";
 
@@ -32,16 +34,10 @@ export const Route = createFileRoute("/map")({
 		// Normalize search params: ensure we have a zoom and markerOnly default
 		// so the server prefetch key matches what the client will request.
 		const raw = (deps.params.search ?? {}) as Record<string, unknown>;
-		const normalized: Record<string, unknown> = {
-			...raw,
-		};
-		if (normalized.zoom === undefined) normalized.zoom = 12;
-		if (normalized.markerOnly === undefined) normalized.markerOnly = "1";
+		const normalized = normalizeParams(raw);
 
-		await context.queryClient.prefetchInfiniteQuery(
-			restaurantQueries.infiniteList(
-				normalized as unknown as RestaurantSearchParams,
-			),
+		await context.queryClient.prefetchQuery(
+			restaurantQueries.list(normalized as unknown as RestaurantSearchParams),
 		);
 	},
 	ssr: "data-only",
@@ -78,13 +74,20 @@ export const Route = createFileRoute("/map")({
 
 function MapPage() {
 	const searchParams = Route.useSearch();
+	// Memoize the normalized search params so the infinite query key is stable
+	// across renders. This prevents unnecessary refetches when the object
+	// identity changes but the values are the same.
+	const memoizedSearchParams = React.useMemo(() => {
+		const raw = (searchParams ?? {}) as Record<string, unknown>;
+		return normalizeParams(raw) as unknown as RestaurantSearchParams;
+	}, [searchParams]);
 
 	// Use the project's typed infiniteList helper and enable keepPreviousData so
 	// changing search params (e.g. bbox while panning) doesn't trigger a full
 	// page loading overlay if we already have cached pages.
-	const infiniteOptions = restaurantQueries.infiniteList(searchParams);
-	const { data, isError, isFetching, isLoading } = useInfiniteQuery({
-		...infiniteOptions,
+	const listOptions = restaurantQueries.list(memoizedSearchParams);
+	const { data, isError, isFetching, isLoading } = useQuery({
+		...listOptions,
 	});
 
 	// If there's no cached data at all, show the full loader. Otherwise keep
@@ -98,9 +101,7 @@ function MapPage() {
 				<MapFilters />
 				<div className="flex flex-col flex-1 text-center p-2">
 					<h1 className="text-xl font-bold mb-2">
-						Displaying{" "}
-						{data?.pages.reduce((sum, p) => sum + (p.count ?? 0), 0) ?? 0}{" "}
-						results
+						Displaying {data?.count ?? 0} results
 					</h1>
 					<AppliedFilters searchParams={searchParams} />
 				</div>
@@ -114,14 +115,13 @@ function MapPage() {
 				)}
 				{/* pass maxMarkers to allow RestaurantMap to limit rendering when dataset grows */}
 				<RestaurantMap
-					restaurants={
-						(data?.pages ? data.pages.flatMap((p) => p.restaurants) : []) || []
-					}
+					restaurants={data?.restaurants ?? []}
 					maxMarkers={2000}
 				/>
 			</main>
 		</div>
 	);
+
 	// AppliedFilters component displays a summary of active filters
 	function AppliedFilters({
 		searchParams,
@@ -143,8 +143,15 @@ function MapPage() {
 		} else if (searchParams?.grade) {
 			filters.push({ label: "Grade", value: String(searchParams.grade) });
 		}
-		if (searchParams?.$limit)
-			filters.push({ label: "Limit", value: String(searchParams.$limit) });
+		if (searchParams?.$limit) {
+			const limitNum = Number(searchParams.$limit);
+			let densityLabel = String(searchParams.$limit);
+			if (limitNum === 1000) densityLabel = "Low";
+			else if (limitNum === 5000) densityLabel = "Medium";
+			else if (limitNum === 10000) densityLabel = "High";
+
+			filters.push({ label: "Density", value: densityLabel });
+		}
 		if (searchParams?.boro)
 			filters.push({ label: "Borough", value: String(searchParams.boro) });
 		if (searchParams?.$order) {

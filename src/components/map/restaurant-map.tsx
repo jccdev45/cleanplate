@@ -129,11 +129,6 @@ type RestaurantMapProps = { restaurants: Restaurant[]; maxMarkers?: number };
 export function RestaurantMap({ restaurants, maxMarkers }: RestaurantMapProps) {
 	const searchParams = useSearch({ from: "/map" });
 
-	console.debug("RestaurantMap received restaurants:", restaurants.length, {
-		minLat: searchParams?.minLat,
-		maxLat: searchParams?.maxLat,
-	});
-
 	// Default NYC center
 	const position: [number, number] = [
 		Number(searchParams?.latitude) || 40.73229776539821,

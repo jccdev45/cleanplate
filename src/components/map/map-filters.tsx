@@ -26,7 +26,9 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 
-const boroughData = {
+const BOROUGH_DATA: {
+	[key: string]: { latitude: number; longitude: number; zoom: number };
+} = {
 	Manhattan: { latitude: 40.776676, longitude: -73.971321, zoom: 12 },
 	Brooklyn: { latitude: 40.650002, longitude: -73.949997, zoom: 12 },
 	Queens: { latitude: 40.742054, longitude: -73.769417, zoom: 12 },
@@ -34,40 +36,35 @@ const boroughData = {
 	"Staten Island": { latitude: 40.579021, longitude: -74.151535, zoom: 12 },
 };
 
+const GRADE_OPTIONS: { label: string; grade?: string }[] = [
+	{ label: "A", grade: "A" },
+	{ label: "B", grade: "B" },
+	{ label: "C", grade: "C" },
+	{ label: "All", grade: undefined },
+];
+
+const LIMIT_OPTIONS: { label: string; limit: number }[] = [
+	{ label: "Low", limit: 1000 },
+	{ label: "Medium", limit: 5000 },
+	{ label: "High", limit: 10000 },
+];
+
 // GradeFilter component
 function GradeFilter({ value }: { value?: string }) {
 	return (
 		<div className="flex flex-col gap-2">
 			<Label className="font-semibold mb-1">Grade:</Label>
 			<div className="flex gap-2">
-				<Link
-					to="/map"
-					search={(prev) => ({ ...prev, grade: "A" })}
-					className={`px-3 py-1 rounded-md text-sm ${value === "A" ? "bg-primary text-primary-foreground" : "bg-muted"}`}
-				>
-					A
-				</Link>
-				<Link
-					to="/map"
-					search={(prev) => ({ ...prev, grade: "B" })}
-					className={`px-3 py-1 rounded-md text-sm ${value === "B" ? "bg-primary text-primary-foreground" : "bg-muted"}`}
-				>
-					B
-				</Link>
-				<Link
-					to="/map"
-					search={(prev) => ({ ...prev, grade: "C" })}
-					className={`px-3 py-1 rounded-md text-sm ${value === "C" ? "bg-primary text-primary-foreground" : "bg-muted"}`}
-				>
-					C
-				</Link>
-				<Link
-					to="/map"
-					search={(prev) => ({ ...prev, grade: undefined })}
-					className={`px-3 py-1 rounded-md text-sm ${!value ? "bg-primary text-primary-foreground" : "bg-muted"}`}
-				>
-					All
-				</Link>
+				{GRADE_OPTIONS.map(({ label, grade }) => (
+					<Link
+						key={label}
+						to="/map"
+						search={(prev) => ({ ...prev, grade })}
+						className={`px-3 py-1 rounded-md text-sm ${value === grade ? "bg-primary text-primary-foreground" : "bg-muted"}`}
+					>
+						{label}
+					</Link>
+				))}
 			</div>
 		</div>
 	);
@@ -78,36 +75,35 @@ function LimitFilter({ value }: { value?: string }) {
 	return (
 		<div className="flex flex-col gap-2">
 			<div className="flex items-center gap-2 mb-1">
-				<Label className="font-semibold">Limit:</Label>
+				<Label className="font-semibold">Density:</Label>
 				<Tooltip>
 					<TooltipTrigger>
 						<CircleQuestionMark className="size-4" />
 					</TooltipTrigger>
 					<TooltipContent>
-						<div className="text-balance">
-							<p>
-								The limit controls the maximum number of raw results returned
-								from the API. <br /> Actual displayed results may be fewer due
-								to data sanitization.
-							</p>
-							<p className="text-destructive-foreground w-fit bg-destructive-foreground/50 p-1 font-bold">
-								NOTE: Higher limits may cause slower load times.
-							</p>
-						</div>
+						<p className="text-balance">
+							Density controls how many restaurants are requested for the map.
+							Lower density shows fewer markers and improves performance; higher
+							density increases coverage but may slow loading.
+						</p>
 					</TooltipContent>
 				</Tooltip>
 			</div>
+
 			<RadioGroup defaultValue={value || "1000"} className="flex gap-2">
-				{[1000, 2000, 3000, 5000].map((limit) => (
+				{LIMIT_OPTIONS.map(({ label, limit }) => (
 					<div className="flex items-center gap-1" key={limit}>
 						<Link
 							className="flex items-center space-x-2"
 							to="/map"
 							search={(prev) => ({ ...prev, $limit: limit })}
 						>
-							<RadioGroupItem value={limit.toString()} id={limit.toString()} />
+							<RadioGroupItem
+								value={limit.toString()}
+								id={`${label}-${limit}`}
+							/>
 						</Link>
-						<Label htmlFor={limit.toString()}>{limit}</Label>
+						<Label htmlFor={`${label}-${limit}`}>{label}</Label>
 					</div>
 				))}
 			</RadioGroup>
@@ -168,7 +164,7 @@ export function MapFilters() {
 						<div className="flex flex-col gap-2">
 							<Label className="font-semibold mb-1">Borough:</Label>
 							<div className="flex gap-2 flex-wrap">
-								{Object.entries(boroughData).map(([name, data]) => (
+								{Object.entries(BOROUGH_DATA).map(([name, data]) => (
 									<Link
 										key={name}
 										to="/map"

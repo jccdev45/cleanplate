@@ -28,13 +28,18 @@ import { useState } from "react";
 const SITE_URL = process.env.SITE_URL ?? "";
 
 export const Route = createFileRoute("/table")({
-	loader: async ({ context }) => {
+	validateSearch: (search) =>
+		restaurantSearchParamsSchema.parse({
+			...search,
+			$limit: search.$limit ?? 5000,
+		}),
+	loaderDeps: (params) => ({ params }),
+	loader: async ({ context, deps }) => {
 		// Prefetch the restaurant list data on the server
 		await context.queryClient.ensureQueryData(
-			restaurantQueries.list({ $limit: 5000 }),
+			restaurantQueries.list({ ...deps.params.search, $limit: 5000 }),
 		);
 	},
-	validateSearch: (search) => restaurantSearchParamsSchema.parse(search),
 	head: () => ({
 		meta: [
 			{ title: `Table | ${SITE_NAME}` },
@@ -77,10 +82,7 @@ function TableRoute() {
 	const [globalFilter, setGlobalFilter] = useState(searchParams?.$q || "");
 
 	const { data, isLoading, isError, isFetching } = useSuspenseQuery(
-		restaurantQueries.list({
-			...searchParams,
-			// $limit: 5000,
-		}),
+		restaurantQueries.list(searchParams),
 	);
 
 	if (isLoading) return <DefaultLoader text="Loading table data..." />;

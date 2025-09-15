@@ -18,13 +18,9 @@ export function groupRestaurants(data: RestaurantRaw[]): Restaurant[] {
 	const restaurantsMap = new Map<string, Restaurant>();
 
 	for (const row of data) {
-		// Ensure this is a valid restaurant
-		if (
-			!row.camis ||
-			!row.inspection_date ||
-			row.inspection_date === "1900-01-01T00:00:00.000"
-		)
-			continue;
+		// Ensure this is a valid restaurant. Require camis, but allow missing
+		// inspection_date for marker-only responses (we'll synthesize a fallback).
+		if (!row.camis) continue;
 
 		// Create or fetch the Restaurant object for this camis
 		let restaurant = restaurantsMap.get(row.camis);
@@ -67,8 +63,11 @@ export function groupRestaurants(data: RestaurantRaw[]): Restaurant[] {
 			};
 		}
 
-		// InspectionId: combine camis + inspection_date for uniqueness
-		const inspectionId = `${row.camis}_${row.inspection_date}`;
+		// InspectionId: combine camis + inspection_date for uniqueness. Some
+		// marker-only responses omit inspection_date, so fall back to grade_date
+		// or an empty string to ensure we still create a marker entry.
+		const inspectionDateKey = row.inspection_date ?? row.grade_date ?? "";
+		const inspectionId = `${row.camis}_${inspectionDateKey}`;
 		// Find existing inspection object for this inspection event
 		let inspection = restaurant.inspections.find(
 			(i) => i.inspectionId === inspectionId,
@@ -76,7 +75,7 @@ export function groupRestaurants(data: RestaurantRaw[]): Restaurant[] {
 		if (!inspection) {
 			inspection = {
 				inspectionId,
-				inspection_date: row.inspection_date,
+				inspection_date: row.inspection_date ?? row.grade_date ?? "",
 				action: row.action,
 				critical_flag: row.critical_flag,
 				score: row.score,

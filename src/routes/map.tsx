@@ -1,12 +1,18 @@
+// TODO: Add cuisine filter (must figure out how to dynamically retrieve list of cuisines first)
+
 import { DefaultLoader } from "@/components/default-loader";
 import { MapFilters } from "@/components/map/map-filters";
 import { RestaurantMap } from "@/components/map/restaurant-map";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { SITE_NAME } from "@/lib/constants";
-import { GRADES, restaurantSearchParamsSchema } from "@/schema/schema";
+import {
+	GRADES,
+	type RestaurantSearchParams,
+	restaurantSearchParamsSchema,
+} from "@/schema/schema";
 import { restaurantQueries } from "@/utils/restaurant";
-import { useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery } from "@tanstack/react-query";
 import {
 	ErrorComponent,
 	type ErrorComponentProps,
@@ -18,13 +24,26 @@ import { Loader2 } from "lucide-react";
 const SITE_URL = process.env.SITE_URL ?? "";
 
 export const Route = createFileRoute("/map")({
-	loader: async ({ context }) => {
-		// Prefetch the restaurant list data on the server
-		await context.queryClient.prefetchQuery(
-			restaurantQueries.list({ $limit: 1000 }),
+	validateSearch: (search) => restaurantSearchParamsSchema.parse(search),
+	loaderDeps: (params) => ({ params }),
+	loader: async ({ context, deps }) => {
+		// Prefetch the infinite restaurant list on the server so the client
+		// infinite query is hydrated and won't issue a duplicate first request.
+		// Normalize search params: ensure we have a zoom and markerOnly default
+		// so the server prefetch key matches what the client will request.
+		const raw = (deps.params.search ?? {}) as Record<string, unknown>;
+		const normalized: Record<string, unknown> = {
+			...raw,
+		};
+		if (normalized.zoom === undefined) normalized.zoom = 12;
+		if (normalized.markerOnly === undefined) normalized.markerOnly = "1";
+
+		await context.queryClient.prefetchInfiniteQuery(
+			restaurantQueries.infiniteList(
+				normalized as unknown as RestaurantSearchParams,
+			),
 		);
 	},
-	validateSearch: (search) => restaurantSearchParamsSchema.parse(search),
 	ssr: "data-only",
 	head: () => ({
 		meta: [
@@ -59,13 +78,18 @@ export const Route = createFileRoute("/map")({
 
 function MapPage() {
 	const searchParams = Route.useSearch();
-	const { data, isError, isFetching, isLoading } = useQuery(
-		restaurantQueries.list({
-			...searchParams,
-		}),
-	);
 
-	if (isLoading) return <DefaultLoader text="Loading map data..." />;
+	// Use the project's typed infiniteList helper and enable keepPreviousData so
+	// changing search params (e.g. bbox while panning) doesn't trigger a full
+	// page loading overlay if we already have cached pages.
+	const infiniteOptions = restaurantQueries.infiniteList(searchParams);
+	const { data, isError, isFetching, isLoading } = useInfiniteQuery({
+		...infiniteOptions,
+	});
+
+	// If there's no cached data at all, show the full loader. Otherwise keep
+	// rendering the previous map while fetching new pages in the background.
+	if (isLoading && !data) return <DefaultLoader text="Loading map data..." />;
 	if (isError || !data) throw new Error("Failed to load map data");
 
 	return (
@@ -74,7 +98,9 @@ function MapPage() {
 				<MapFilters />
 				<div className="flex flex-col flex-1 text-center p-2">
 					<h1 className="text-xl font-bold mb-2">
-						Displaying {data?.count ?? 0} results
+						Displaying{" "}
+						{data?.pages.reduce((sum, p) => sum + (p.count ?? 0), 0) ?? 0}{" "}
+						results
 					</h1>
 					<AppliedFilters searchParams={searchParams} />
 				</div>
@@ -86,7 +112,13 @@ function MapPage() {
 						<Loader2 className="size-6 animate-spin text-primary" />
 					</div>
 				)}
-				<RestaurantMap restaurants={data?.restaurants || []} />
+				{/* pass maxMarkers to allow RestaurantMap to limit rendering when dataset grows */}
+				<RestaurantMap
+					restaurants={
+						(data?.pages ? data.pages.flatMap((p) => p.restaurants) : []) || []
+					}
+					maxMarkers={2000}
+				/>
 			</main>
 		</div>
 	);

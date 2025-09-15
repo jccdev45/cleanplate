@@ -96,6 +96,9 @@ export const getRestaurantsFn = createServerFn({ method: "GET" })
 			"minLng",
 			"maxLng",
 			"markerOnly",
+			// Client-only view params that must not be forwarded as equality filters
+			"latitude",
+			"longitude",
 			// Client-only params that shouldn't be forwarded to Socrata
 			"zoom",
 		];
@@ -150,6 +153,7 @@ export const getRestaurantsFn = createServerFn({ method: "GET" })
 		}
 		// Transform/group
 		const restaurants = groupRestaurants(rawRows);
+		// return grouped restaurants
 
 		return {
 			restaurants,
@@ -175,19 +179,54 @@ export const restaurantQueries = {
 		});
 	},
 	infiniteList: (
+		// Allow the caller to pass a zoom hint which we use only to compute
+		// an appropriate $limit. The server code will still strip `zoom`
+		// before sending to Socrata.
 		params?: Omit<RestaurantSearchParams, "$limit" | "$offset">,
 	) => {
 		return infiniteQueryOptions({
 			queryKey: ["restaurants", "infinite", params],
-			queryFn: ({ pageParam }) =>
-				getRestaurantsFn({
-					data: { ...params, $offset: pageParam, $limit: 1000 },
-				}),
+			queryFn: ({ pageParam }) => {
+				// Compute a sensible $limit for map queries based on a zoom hint.
+				// If caller passed a zoom hint in params, use it to scale the $limit
+				// but do NOT forward `zoom` to Socrata - server-side will strip it.
+				// `params` is strongly typed as RestaurantSearchParams without zoom,
+				// but callers (map route) may include a `zoom` hint in the object.
+				// Read it defensively from unknown and treat as number when present.
+				const paramsAny = params as unknown as Record<string, unknown>;
+				const zoomHint =
+					typeof paramsAny?.zoom === "number"
+						? (paramsAny.zoom as number)
+						: typeof paramsAny?.zoom === "string"
+							? Number(paramsAny.zoom)
+							: undefined;
+				// Default limits tuned by zoom: more zoomed-out => larger limit
+				// zoom 0..4 -> 5000, 5..8 -> 3000, 9..11 -> 1500, 12..14 -> 800, 15+ -> 400
+				let computedLimit = 1000;
+				if (typeof zoomHint === "number") {
+					const z = zoomHint;
+					if (z <= 4) computedLimit = 5000;
+					else if (z <= 8) computedLimit = 3000;
+					else if (z <= 11) computedLimit = 1500;
+					else if (z <= 14) computedLimit = 800;
+					else computedLimit = 500;
+				} else {
+					// no zoom hint, be slightly more generous for maps
+					computedLimit = 3000;
+				}
+				// Enforce hard cap
+				const finalLimit = Math.min(5000, Math.max(100, computedLimit));
+
+				return getRestaurantsFn({
+					data: { ...params, $offset: pageParam, $limit: finalLimit },
+				});
+			},
 			initialPageParam: 0,
 			getNextPageParam: (lastPage) => lastPage.nextOffset,
 			staleTime: HOUR_IN_MS,
 			gcTime: HOUR_IN_MS * 2,
 			refetchOnWindowFocus: false,
+			placeholderData: keepPreviousData,
 		});
 	},
 	detail: (camis: string) => {
@@ -200,3 +239,14 @@ export const restaurantQueries = {
 		});
 	},
 };
+
+// Export a small helper so the client can compute the same $limit used server-side
+export function computeLimitFromZoom(zoom?: number) {
+	if (typeof zoom !== "number" || !Number.isFinite(zoom)) return 3000;
+	const z = zoom;
+	if (z <= 4) return 5000;
+	if (z <= 8) return 3000;
+	if (z <= 11) return 1500;
+	if (z <= 14) return 800;
+	return 500;
+}

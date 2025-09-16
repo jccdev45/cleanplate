@@ -1,6 +1,7 @@
 // TODO: Add cuisine filter (must figure out how to dynamically retrieve list of cuisines first)
 
 import { DefaultLoader } from "@/components/default-loader";
+import { DismissibleAlert } from "@/components/dismissible-alert";
 import { MapFilters } from "@/components/map/map-filters";
 import { RestaurantMap } from "@/components/map/restaurant-map";
 import { Badge } from "@/components/ui/badge";
@@ -72,6 +73,7 @@ export const Route = createFileRoute("/map")({
 
 function MapPage() {
 	const searchParams = Route.useSearch();
+	const navigate = Route.useNavigate();
 
 	// Memoize the normalized search params so the query key is stable
 	// across renders. This prevents unnecessary refetches when the object
@@ -93,6 +95,28 @@ function MapPage() {
 
 	return (
 		<div className="flex flex-col h-[calc(100vh-64px)]">
+			{/* Informational alert with quick action to increase density */}
+			<div className="px-4">
+				<DismissibleAlert
+					title="Map density"
+					action={
+						<Button
+							size="sm"
+							variant="outline"
+							onClick={() =>
+								navigate({
+									search: (prev) => ({ ...(prev || {}), $limit: 5000 }),
+								})
+							}
+						>
+							Increase density
+						</Button>
+					}
+				>
+					Showing a subset of results by default improves performance. Increase
+					density to see more markers.
+				</DismissibleAlert>
+			</div>
 			<div className="flex items-center px-4">
 				<MapFilters />
 				<div className="flex flex-col flex-1 text-center p-2">
@@ -109,10 +133,6 @@ function MapPage() {
 						<Loader2 className="size-6 animate-spin text-primary" />
 					</div>
 				)}
-				{/* pass maxMarkers to allow RestaurantMap to limit rendering when dataset grows
-					and slice the restaurants list on the route to avoid passing a very
-					large array into the map component which can cause heavy rendering
-					and long main-thread times. */}
 				<Suspense
 					fallback={
 						<div className="absolute inset-0 flex items-center justify-center">
@@ -120,28 +140,8 @@ function MapPage() {
 						</div>
 					}
 				>
-					<RestaurantMap
-						restaurants={React.useMemo(() => {
-							const all = data?.restaurants ?? [];
-							// Keep a reasonable default cap. This reduces marker rendering
-							// costs and memory usage. If map's `maxMarkers` prop changes,
-							// this should be updated as well.
-							const DEFAULT_MAX_MARKERS = 1000;
-							return all.length > DEFAULT_MAX_MARKERS
-								? all.slice(0, DEFAULT_MAX_MARKERS)
-								: all;
-						}, [data?.restaurants])}
-						maxMarkers={1000}
-					/>
+					<RestaurantMap restaurants={data?.restaurants ?? []} />
 				</Suspense>
-
-				{/* Show a subtle notice when results were truncated to improve UX */}
-				{data?.restaurants?.length > 1000 && (
-					<div className="absolute bottom-4 left-4 z-50 bg-yellow-50 text-yellow-800 p-2 rounded shadow">
-						Showing 1,000 of {data.restaurants.length} results. Refine filters
-						to see fewer markers.
-					</div>
-				)}
 			</main>
 		</div>
 	);

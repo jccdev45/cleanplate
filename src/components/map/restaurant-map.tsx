@@ -1,8 +1,11 @@
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import type { Restaurant } from "@/types/restaurant";
+import { useIsFetching } from "@tanstack/react-query";
 import { Link, useNavigate, useSearch } from "@tanstack/react-router";
 import L from "leaflet";
 import { UtensilsCrossed } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
 	MapContainer,
@@ -14,10 +17,95 @@ import {
 } from "react-leaflet";
 import MarkerClusterGroup from "react-leaflet-cluster";
 
-function MapBoundsUpdater() {
-	const navigate = useNavigate({ from: "/map" });
+function MapBoundsUpdater({
+	onBoundsChange,
+}: {
+	onBoundsChange: (b: {
+		minLat: number;
+		maxLat: number;
+		minLng: number;
+		maxLng: number;
+		zoom: number;
+		latitude: number;
+		longitude: number;
+	}) => void;
+}) {
 	const debounceRef = useRef<number | null>(null);
 	const currentSearch = useSearch({ from: "/map" });
+
+	// tolerant numeric equality for query params which may be strings
+	const nearlyEqual = (a?: number | string, b?: number, eps = 1e-4) => {
+		if (a === undefined || a === null || b === undefined || b === null)
+			return false;
+		const an = Number(a);
+		const bn = Number(b);
+		if (!Number.isFinite(an) || !Number.isFinite(bn)) return false;
+		return Math.abs(an - bn) <= Math.max(eps, Math.abs(bn) * 1e-4);
+	};
+
+	const shouldSetBounds = (newBounds: {
+		minLat: number;
+		maxLat: number;
+		minLng: number;
+		maxLng: number;
+		zoom: number;
+		latitude: number;
+		longitude: number;
+	}) => {
+		// If current search params already reflect the new bounds (within a small epsilon), don't set pending
+		if (!currentSearch) return true;
+		try {
+			// If any search param is missing, treat as different so button appears
+			const keys = ["minLat", "maxLat", "minLng", "maxLng", "zoom"] as const;
+			type Key = (typeof keys)[number];
+			const comparisons = keys.map((k: Key) => {
+				const cur = (currentSearch as Record<string, string | undefined>)[k];
+				if (cur === undefined || cur === null) return false;
+				const target = (newBounds as Record<Key, number>)[k];
+				// use a looser epsilon for zoom (it's coarse)
+				return k === "zoom"
+					? nearlyEqual(cur, target, 1e-2)
+					: nearlyEqual(cur, target, 1e-4);
+			});
+
+			// If epsilon checks already say it's different, show overlay
+			const allSame = comparisons.every(Boolean);
+			if (!allSame) return true;
+
+			// Otherwise compute fractional displacement relative to current viewport size.
+			// If user has panned away by more than thresholdFraction (e.g., 0.15 = 15%), show overlay.
+			const thresholdFraction = 0.15; // configurable: 15% of viewport
+			const curMinLat = Number(currentSearch.minLat);
+			const curMaxLat = Number(currentSearch.maxLat);
+			const curMinLng = Number(currentSearch.minLng);
+			const curMaxLng = Number(currentSearch.maxLng);
+			if (
+				[curMinLat, curMaxLat, curMinLng, curMaxLng].some(
+					(v) => !Number.isFinite(v),
+				)
+			) {
+				return true;
+			}
+
+			const latSpan = Math.abs(curMaxLat - curMinLat);
+			const lngSpan = Math.abs(curMaxLng - curMinLng);
+			// avoid division by zero
+			const latFrac =
+				latSpan === 0
+					? 1
+					: Math.abs(newBounds.latitude - (curMinLat + curMaxLat) / 2) /
+						latSpan;
+			const lngFrac =
+				lngSpan === 0
+					? 1
+					: Math.abs(newBounds.longitude - (curMinLng + curMaxLng) / 2) /
+						lngSpan;
+			// If either axis moved more than thresholdFraction of the viewport, prompt
+			return latFrac > thresholdFraction || lngFrac > thresholdFraction;
+		} catch (err) {
+			return true;
+		}
+	};
 
 	useMapEvents({
 		load: (e) => {
@@ -25,47 +113,42 @@ function MapBoundsUpdater() {
 				const b = (e.target as L.Map).getBounds();
 				const z = (e.target as L.Map).getZoom();
 				const c = (e.target as L.Map).getCenter();
-				navigate({
-					search: (prev) => ({
-						...(prev || currentSearch || {}),
-						minLat: b.getSouth(),
-						maxLat: b.getNorth(),
-						minLng: b.getWest(),
-						maxLng: b.getEast(),
-						markerOnly: "1",
-						zoom: z,
-						latitude: c.lat,
-						longitude: c.lng,
-					}),
-				});
+				const nb = {
+					minLat: b.getSouth(),
+					maxLat: b.getNorth(),
+					minLng: b.getWest(),
+					maxLng: b.getEast(),
+					zoom: z,
+					latitude: c.lat,
+					longitude: c.lng,
+				};
+				if (shouldSetBounds(nb)) onBoundsChange(nb);
 			} catch (err) {
 				// ignore
 			}
 		},
 		moveend: (e) => {
 			if (debounceRef.current) window.clearTimeout(debounceRef.current);
+			// increase debounce slightly to avoid brief state flips while the user is still interacting
 			debounceRef.current = window.setTimeout(() => {
 				try {
 					const b = (e.target as L.Map).getBounds();
 					const z = (e.target as L.Map).getZoom();
 					const c = (e.target as L.Map).getCenter();
-					navigate({
-						search: (prev) => ({
-							...(prev || currentSearch || {}),
-							minLat: b.getSouth(),
-							maxLat: b.getNorth(),
-							minLng: b.getWest(),
-							maxLng: b.getEast(),
-							markerOnly: "1",
-							zoom: z,
-							latitude: c.lat,
-							longitude: c.lng,
-						}),
-					});
+					const nb = {
+						minLat: b.getSouth(),
+						maxLat: b.getNorth(),
+						minLng: b.getWest(),
+						maxLng: b.getEast(),
+						zoom: z,
+						latitude: c.lat,
+						longitude: c.lng,
+					};
+					if (shouldSetBounds(nb)) onBoundsChange(nb);
 				} catch (err) {
 					// ignore
 				}
-			}, 250) as unknown as number;
+			}, 1000) as unknown as number;
 		},
 	});
 
@@ -124,10 +207,26 @@ function MapViewSync() {
 	return null;
 }
 
-type RestaurantMapProps = { restaurants: Restaurant[]; maxMarkers?: number };
+type RestaurantMapProps = { restaurants: Restaurant[] };
 
-export function RestaurantMap({ restaurants, maxMarkers }: RestaurantMapProps) {
+export function RestaurantMap({ restaurants }: RestaurantMapProps) {
 	const searchParams = useSearch({ from: "/map" });
+	const isFetching = useIsFetching({
+		queryKey: ["restaurants", searchParams],
+	});
+	const navigate = useNavigate({ from: "/map" });
+
+	// No local effect: overlay visibility is derived from pendingBounds || isFetching
+
+	const [pendingBounds, setPendingBounds] = useState<{
+		minLat: number;
+		maxLat: number;
+		minLng: number;
+		maxLng: number;
+		zoom: number;
+		latitude: number;
+		longitude: number;
+	} | null>(null);
 
 	// Default NYC center
 	const position: [number, number] = [
@@ -160,48 +259,81 @@ export function RestaurantMap({ restaurants, maxMarkers }: RestaurantMapProps) {
 	}
 
 	return (
-		<MapContainer
-			center={position as L.LatLngTuple}
-			zoom={mapZoom}
-			scrollWheelZoom={true}
-			className="w-full h-full rounded-lg shadow-lg z-0"
+		// wrapper keeps overlay outside of Leaflet's internal transformed container
+		<div
+			className="relative w-full h-full rounded-lg shadow-lg"
 			style={{ minHeight: "60vh", maxHeight: "80vh" }}
 		>
-			<MapBoundsUpdater />
-			<MapViewSync />
-			<TileLayer
-				attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-				url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-			/>
-
-			<MarkerClusterGroup
-				chunkedLoading
-				showCoverageOnHover={false}
-				spiderfyOnMaxZoom={true}
-				maxClusterRadius={60}
-				iconCreateFunction={createClusterCustomIcon}
-				disableClusteringAtZoom={16}
-				options={{ minClusterSize: 5 }}
+			<MapContainer
+				center={position as L.LatLngTuple}
+				zoom={mapZoom}
+				scrollWheelZoom={true}
+				className="w-full h-full z-0"
 			>
-				<MarkerVisibility
-					restaurants={restaurants}
-					maxMarkers={maxMarkers}
-					markerIcon={markerIcon}
+				<MapBoundsUpdater onBoundsChange={setPendingBounds} />
+				<MapViewSync />
+				<TileLayer
+					attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+					url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
 				/>
-			</MarkerClusterGroup>
-		</MapContainer>
+
+				<MarkerClusterGroup
+					chunkedLoading
+					showCoverageOnHover={false}
+					spiderfyOnMaxZoom={true}
+					maxClusterRadius={60}
+					iconCreateFunction={createClusterCustomIcon}
+					disableClusteringAtZoom={16}
+					options={{ minClusterSize: 5 }}
+				>
+					<MarkerVisibility restaurants={restaurants} markerIcon={markerIcon} />
+				</MarkerClusterGroup>
+			</MapContainer>
+
+			{/* Overlay: show pending search control when user has panned/zoomed */}
+			{(pendingBounds || Boolean(isFetching)) && (
+				<div className="absolute bottom-4 inset-x-1/2 z-50 pointer-events-auto">
+					<Button
+						disabled={Boolean(isFetching)}
+						onClick={() => {
+							if (!pendingBounds) return;
+							// Commit the pending bounds to the URL which triggers the route to fetch
+							navigate({
+								search: (prev) => ({
+									...(prev || {}),
+									minLat: pendingBounds.minLat,
+									maxLat: pendingBounds.maxLat,
+									minLng: pendingBounds.minLng,
+									maxLng: pendingBounds.maxLng,
+									markerOnly: "1",
+									zoom: pendingBounds.zoom,
+									latitude: pendingBounds.latitude,
+									longitude: pendingBounds.longitude,
+								}),
+							});
+							// hide pendingBounds; overlay will be visible while isFetching > 0
+							setPendingBounds(null);
+						}}
+					>
+						{isFetching ? (
+							<span className="inline-flex items-center gap-2">
+								<Loader2 className="size-4 animate-spin" />
+								<span>Search this area</span>
+							</span>
+						) : (
+							"Search this area"
+						)}
+					</Button>
+				</div>
+			)}
+		</div>
 	);
 }
 
 function MarkerVisibility({
 	restaurants,
-	maxMarkers,
 	markerIcon,
-}: {
-	restaurants: Restaurant[];
-	maxMarkers?: number;
-	markerIcon: L.Icon<L.IconOptions>;
-}) {
+}: { restaurants: Restaurant[]; markerIcon: L.Icon<L.IconOptions> }) {
 	// track map bounds and re-evaluate visible markers
 	const [currentBounds, setCurrentBounds] = useState<L.LatLngBounds | null>(
 		null,
@@ -237,21 +369,13 @@ function MarkerVisibility({
 		[restaurants],
 	);
 
-	const threshold = maxMarkers ?? Number.POSITIVE_INFINITY;
-
 	const toRender = useMemo(() => {
-		if (numeric.length <= threshold) return numeric;
-		// try to filter by current viewport
 		const b = currentBounds;
-		if (b) {
-			const within = numeric.filter((r) =>
-				b.contains([r.lat, r.lng] as L.LatLngExpression),
-			);
-			if (within.length > 0) return within.slice(0, threshold);
-		}
-		// fallback: return first N
-		return numeric.slice(0, threshold);
-	}, [numeric, threshold, currentBounds]);
+		if (!b) return numeric;
+		return numeric.filter((r) =>
+			b.contains([r.lat, r.lng] as L.LatLngExpression),
+		);
+	}, [numeric, currentBounds]);
 
 	return (
 		<>

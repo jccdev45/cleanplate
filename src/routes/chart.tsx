@@ -21,14 +21,18 @@ import {
 	type ErrorComponentProps,
 	createFileRoute,
 } from "@tanstack/react-router";
+import React from "react";
 
 const SITE_URL = process.env.SITE_URL ?? "";
+const $limit = 10000;
 
 export const Route = createFileRoute("/chart")({
 	loader: async ({ context }) => {
-		// Prefetch the restaurant list data on the server
+		// Prefetch the restaurant list data on the server. Pass an explicit
+		// params object so the server validator (Zod) receives an object
+		// instead of undefined.
 		await context.queryClient.ensureQueryData(
-			restaurantQueries.list({ $limit: 5000 }),
+			restaurantQueries.list({ $limit }),
 		);
 	},
 	head: () => ({
@@ -45,13 +49,6 @@ export const Route = createFileRoute("/chart")({
 				content:
 					"Visual dashboard for NYC restaurant inspection trends by borough, cuisine, and score.",
 			},
-			{
-				property: "og:image",
-				content: SITE_URL
-					? `${SITE_URL}/images/cosmic-diner.jpg`
-					: "/images/cosmic-diner.jpg",
-			},
-			{ name: "twitter:card", content: "summary_large_image" },
 		],
 		links: [
 			...(SITE_URL ? [{ rel: "canonical", href: `${SITE_URL}/chart` }] : []),
@@ -64,90 +61,128 @@ export const Route = createFileRoute("/chart")({
 
 function RouteComponent() {
 	const { data, isLoading, isError } = useSuspenseQuery(
-		restaurantQueries.list({ $limit: 5000 }),
+		restaurantQueries.list({ $limit }),
 	);
 
 	if (isLoading) return <DefaultLoader text="Loading chart data..." />;
 	if (isError || !data) throw new Error("Failed to load chart data");
 
-	const cuisineCounts: Record<string, number> = {};
-	const boroughCounts: Record<string, number> = {};
-	const gradeCounts: Record<string, number> = {};
-	const criticalFlagCounts: Record<string, number> = {};
-	const scores: number[] = [];
-	for (const r of data.restaurants) {
-		const cuisine = r.cuisine_description || "Other";
-		cuisineCounts[cuisine] = (cuisineCounts[cuisine] || 0) + 1;
-		const boro = r.boro || "Other";
-		boroughCounts[boro] = (boroughCounts[boro] || 0) + 1;
-		const grade = r.inspections[0]?.grade || "N/A";
-		gradeCounts[grade] = (gradeCounts[grade] || 0) + 1;
-		const criticalFlag = r.inspections[0]?.critical_flag || "Not Applicable";
-		criticalFlagCounts[criticalFlag] =
-			(criticalFlagCounts[criticalFlag] || 0) + 1;
-		if (
-			r.inspections[0]?.score !== null &&
-			r.inspections[0]?.score !== undefined
-		) {
-			scores.push(r.inspections[0].score);
+	const {
+		cuisineChartData,
+		areaChartData,
+		boroughChartData,
+		gradeChartData,
+		criticalFlagChartData,
+		scoreDistribution,
+		totalRestaurants,
+		totalCuisines,
+		scoresLength,
+		scoresSum,
+		topCuisines,
+	} = React.useMemo(() => {
+		const cuisineCounts: Record<string, number> = {};
+		const boroughCounts: Record<string, number> = {};
+		const gradeCounts: Record<string, number> = {};
+		const criticalFlagCounts: Record<string, number> = {};
+		const scores: number[] = [];
+		const cuisineTrends: Record<string, Record<string, number>> = {};
+
+		for (const r of data.restaurants) {
+			const cuisine = r.cuisine_description || "Other";
+			cuisineCounts[cuisine] = (cuisineCounts[cuisine] || 0) + 1;
+
+			const boro = r.boro || "Other";
+			boroughCounts[boro] = (boroughCounts[boro] || 0) + 1;
+
+			const grade = r.inspections[0]?.grade || "N/A";
+			gradeCounts[grade] = (gradeCounts[grade] || 0) + 1;
+
+			const criticalFlag = r.inspections[0]?.critical_flag || "Not Applicable";
+			criticalFlagCounts[criticalFlag] =
+				(criticalFlagCounts[criticalFlag] || 0) + 1;
+
+			const score = r.inspections[0]?.score;
+			if (score !== null && score !== undefined && Number.isFinite(score)) {
+				scores.push(score);
+			}
+
+			const year = r.inspections[0]?.inspection_date?.slice(0, 4) || "Unknown";
+			if (!cuisineTrends[cuisine]) cuisineTrends[cuisine] = {};
+			cuisineTrends[cuisine][year] = (cuisineTrends[cuisine][year] || 0) + 1;
 		}
-	}
-	const cuisineChartData = Object.entries(cuisineCounts)
-		.sort((a, b) => b[1] - a[1])
-		.slice(0, 12)
-		.map(([cuisine, count]) => ({ cuisine, count }));
-	// AreaChart data: show top 6 cuisines over time (by year)
-	const cuisineTrends: Record<string, Record<string, number>> = {};
-	for (const r of data.restaurants) {
-		const cuisine = r.cuisine_description || "Other";
-		const year = r.inspections[0]?.inspection_date?.slice(0, 4) || "Unknown";
-		if (!cuisineTrends[cuisine]) cuisineTrends[cuisine] = {};
-		cuisineTrends[cuisine][year] = (cuisineTrends[cuisine][year] || 0) + 1;
-	}
-	const topCuisines = Object.entries(cuisineCounts)
-		.sort((a, b) => b[1] - a[1])
-		.slice(0, 6)
-		.map(([cuisine]) => cuisine);
-	const allYears = Array.from(
-		new Set(
-			Object.values(cuisineTrends).flatMap((trend) => Object.keys(trend)),
-		),
-	).sort();
-	const areaChartData = allYears.map((year) => {
-		const entry: Record<string, number | string> = { year };
-		for (const cuisine of topCuisines) {
-			entry[cuisine] = cuisineTrends[cuisine]?.[year] || 0;
-		}
-		return entry;
-	});
-	const boroughChartData = Object.entries(boroughCounts)
-		.sort((a, b) => b[1] - a[1])
-		.map(([boro, count]) => ({ boro, count }));
-	const gradeChartData = Object.entries(gradeCounts)
-		.sort((a, b) => (a[0] < b[0] ? -1 : 1))
-		.map(([grade, count]) => ({ grade, count }));
-	const criticalFlagChartData = Object.entries(criticalFlagCounts)
-		.sort((a, b) => b[1] - a[1])
-		.map(([flag, count]) => ({ name: flag, value: count }));
-	const scoreBins = [0, 13, 27, 45, 150];
-	const scoreLabels = [
-		"0-13 (A)",
-		"14-27 (B)",
-		"28-44 (C)",
-		"45+ (C or worse)",
-	];
-	const scoreDistribution = scoreBins.slice(0, -1).map((bin, i) => {
-		const nextBin = scoreBins[i + 1];
+
+		const cuisineChartData = Object.entries(cuisineCounts)
+			.sort((a, b) => b[1] - a[1])
+			.slice(0, 12)
+			.map(([cuisine, count]) => ({ cuisine, count }));
+
+		const topCuisines = Object.entries(cuisineCounts)
+			.sort((a, b) => b[1] - a[1])
+			.slice(0, 6)
+			.map(([cuisine]) => cuisine);
+
+		const allYears = Array.from(
+			new Set(
+				Object.values(cuisineTrends).flatMap((trend) => Object.keys(trend)),
+			),
+		).sort();
+
+		const areaChartData = allYears.map((year) => {
+			const entry: Record<string, number | string> = { year };
+			for (const cuisine of topCuisines) {
+				entry[cuisine] = cuisineTrends[cuisine]?.[year] || 0;
+			}
+			return entry;
+		});
+
+		const boroughChartData = Object.entries(boroughCounts)
+			.sort((a, b) => b[1] - a[1])
+			.map(([boro, count]) => ({ boro, count }));
+
+		const gradeChartData = Object.entries(gradeCounts)
+			.sort((a, b) => (a[0] < b[0] ? -1 : 1))
+			.map(([grade, count]) => ({ grade, count }));
+
+		const criticalFlagChartData = Object.entries(criticalFlagCounts)
+			.sort((a, b) => b[1] - a[1])
+			.map(([flag, count]) => ({ name: flag, value: count }));
+
+		const scoreBins = [0, 13, 27, 45, 150];
+		const scoreLabels = [
+			"0-13 (A)",
+			"14-27 (B)",
+			"28-44 (C)",
+			"45+ (C or worse)",
+		];
+		const scoreDistribution = scoreBins.slice(0, -1).map((bin, i) => {
+			const nextBin = scoreBins[i + 1];
+			return {
+				name: scoreLabels[i],
+				count: scores.filter((score) => score >= bin && score < nextBin).length,
+			};
+		});
+		const totalRestaurants = data.restaurants.length;
+		const totalCuisines = Object.keys(cuisineCounts).length;
+		const scoresLength = scores.length;
+		const scoresSum = scores.reduce((a, b) => a + b, 0);
+
 		return {
-			name: scoreLabels[i],
-			count: scores.filter((score) => score >= bin && score < nextBin).length,
+			cuisineChartData,
+			areaChartData,
+			boroughChartData,
+			gradeChartData,
+			criticalFlagChartData,
+			scoreDistribution,
+			totalRestaurants,
+			totalCuisines,
+			scoresLength,
+			scoresSum,
+			topCuisines,
 		};
-	});
+	}, [data.restaurants]);
 
 	// Summary cards
-	const totalRestaurants = data.restaurants.length;
-	const totalCuisines = Object.keys(cuisineCounts).length;
-	const gradeACount = gradeCounts.A || 0;
+	const gradeACount = gradeChartData.find((g) => g.grade === "A")?.count || 0;
 	const percentageGradeA =
 		totalRestaurants > 0
 			? ((gradeACount / totalRestaurants) * 100).toFixed(1)
@@ -168,13 +203,16 @@ function RouteComponent() {
 			<section className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-10">
 				<Card>
 					<CardHeader>
-						<CardTitle>Total Restaurants</CardTitle>
-						<CardDescription>NYC database size</CardDescription>
+						<CardTitle>Avg Inspection Score</CardTitle>
+						<CardDescription>Mean of latest inspection scores</CardDescription>
 					</CardHeader>
 					<CardContent>
 						<div className="text-3xl font-bold text-primary">
-							{totalRestaurants.toLocaleString()}
+							{scoresLength > 0 ? (scoresSum / scoresLength).toFixed(1) : "N/A"}
 						</div>
+						<p className="text-sm text-muted-foreground mt-1">
+							Based on {scoresLength.toLocaleString()} inspections
+						</p>
 					</CardContent>
 				</Card>
 				<Card>

@@ -179,43 +179,31 @@ export const restaurantQueries = {
 		});
 	},
 	infiniteList: (
-		// Allow the caller to pass a zoom hint which we use only to compute
-		// an appropriate $limit. The server code will still strip `zoom`
-		// before sending to Socrata.
-		params?: Omit<RestaurantSearchParams, "$limit" | "$offset">,
+		// For table usage, allow callers to pass pagination params including
+		// an optional $limit. We no longer compute limits from a zoom hint.
+		params?: Omit<RestaurantSearchParams, "$offset">,
 	) => {
 		return infiniteQueryOptions({
 			queryKey: ["restaurants", "infinite", params],
 			queryFn: ({ pageParam }) => {
-				// Compute a sensible $limit for map queries based on a zoom hint.
-				// If caller passed a zoom hint in params, use it to scale the $limit
-				// but do NOT forward `zoom` to Socrata - server-side will strip it.
-				// `params` is strongly typed as RestaurantSearchParams without zoom,
-				// but callers (map route) may include a `zoom` hint in the object.
-				// Read it defensively from unknown and treat as number when present.
-				const paramsAny = params as unknown as Record<string, unknown>;
-				const zoomHint =
-					typeof paramsAny?.zoom === "number"
-						? (paramsAny.zoom as number)
-						: typeof paramsAny?.zoom === "string"
-							? Number(paramsAny.zoom)
+				// Respect caller-provided $limit when present; otherwise use a
+				// sensible default. Enforce the same hard caps as before.
+				const callerLimit = (params as Record<string, unknown>)?.$limit;
+				const parsedLimit =
+					typeof callerLimit === "number"
+						? callerLimit
+						: typeof callerLimit === "string"
+							? Number(callerLimit)
 							: undefined;
-				// Default limits tuned by zoom: more zoomed-out => larger limit
-				// zoom 0..4 -> 5000, 5..8 -> 3000, 9..11 -> 1500, 12..14 -> 800, 15+ -> 400
-				let computedLimit = 1000;
-				if (typeof zoomHint === "number") {
-					const z = zoomHint;
-					if (z <= 4) computedLimit = 5000;
-					else if (z <= 8) computedLimit = 3000;
-					else if (z <= 11) computedLimit = 1500;
-					else if (z <= 14) computedLimit = 800;
-					else computedLimit = 500;
-				} else {
-					// no zoom hint, be slightly more generous for maps
-					computedLimit = 3000;
-				}
-				// Enforce hard cap
-				const finalLimit = Math.min(5000, Math.max(100, computedLimit));
+
+				const defaultLimit = 1000; // conservative default for table pagination
+				// For table infinite queries we default to and cap at 1000 to avoid
+				// huge payloads. Other views (chart/map) should use `list` or
+				// compute their own limits as needed.
+				const finalLimit = Math.min(
+					1000,
+					Math.max(100, parsedLimit ?? defaultLimit),
+				);
 
 				return getRestaurantsFn({
 					data: { ...params, $offset: pageParam, $limit: finalLimit },
@@ -244,7 +232,7 @@ export const restaurantQueries = {
 export function computeLimitFromZoom(zoom?: number) {
 	if (typeof zoom !== "number" || !Number.isFinite(zoom)) return 3000;
 	const z = zoom;
-	if (z <= 4) return 5000;
+	if (z <= 4) return 3000;
 	if (z <= 8) return 3000;
 	if (z <= 11) return 1500;
 	if (z <= 14) return 800;

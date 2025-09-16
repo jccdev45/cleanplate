@@ -13,7 +13,14 @@ export const createRouter = () => {
 		createTanstackRouter({
 			routeTree,
 			context: { ...rqContext },
+			// Preloading strategy tuned for this app:
+			// - 'intent' preloads on hover/touchstart (low-cost, good UX)
+			// - defaultPreloadDelay: 100ms reduces accidental preloads from fleeting hovers
+			// - defaultPreloadStaleTime: 0 lets TanStack Query be the single source of truth
+			//   for caching/staleness; loaders should call queryClient.prefetch/ensure
 			defaultPreload: "intent",
+			defaultPreloadDelay: 100,
+			defaultPreloadStaleTime: 0,
 			Wrap: (props: { children: React.ReactNode }) => {
 				return (
 					<TanstackQuery.Provider {...rqContext}>

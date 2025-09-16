@@ -109,7 +109,13 @@ export function groupRestaurants(data: RestaurantRaw[]): Restaurant[] {
 	// Sort inspections by most recent date (descending)
 	for (const restaurant of restaurantsMap.values()) {
 		restaurant.inspections.sort((a, b) => {
-			// Compare as ISO date strings
+			// Treat empty inspection_date (no inspection) as older than any real date
+			const aEmpty = !a.inspection_date;
+			const bEmpty = !b.inspection_date;
+			if (aEmpty && bEmpty) return 0;
+			if (aEmpty) return 1; // a is older
+			if (bEmpty) return -1; // b is older
+			// Both have dates: compare as ISO date strings (descending)
 			return b.inspection_date.localeCompare(a.inspection_date);
 		});
 	}

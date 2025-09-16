@@ -18,3 +18,10 @@ export function Provider({
 		<QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
 	);
 }
+
+// Convenience helper for loaders and other non-React code to access
+// a QueryClient instance. Import and call `getContext().queryClient` in loaders
+// so preloads can prefetch into the same client used by the app.
+export function getQueryClient() {
+	return getContext().queryClient;
+}

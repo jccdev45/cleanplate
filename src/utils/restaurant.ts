@@ -2,7 +2,6 @@ import { groupRestaurants } from "@/lib/utils";
 import {
 	type RestaurantRaw,
 	type RestaurantSearchParams,
-	restaurantApiResponseSchema,
 	restaurantRawSchema,
 	restaurantSearchParamsSchema,
 } from "@/schema/schema";
@@ -30,7 +29,6 @@ export const getRestaurantsFn = createServerFn({ method: "GET" })
 
 		// Helper: strip surrounding quotes and whitespace
 		const stripQuotes = (v: unknown) => {
-			if (v === undefined || v === null) return undefined;
 			const s = String(v).trim();
 			return s.replace(/^"+|"+$/g, "");
 		};
@@ -69,6 +67,18 @@ export const getRestaurantsFn = createServerFn({ method: "GET" })
 			if (params.$limit === undefined) params.$limit = 300;
 		}
 
+		// includeUninspected: opt-in flag to include rows with sentinel inspection_date (1900-01-01).
+		// Default behavior: exclude sentinel rows to avoid fetching lots of new/uninspected entries.
+		const includeUninspectedVal = stripQuotes(
+			params.includeUninspected ?? paramsRaw.includeUninspected,
+		);
+		const includeUninspected =
+			includeUninspectedVal === "1" ||
+			(typeof includeUninspectedVal === "string" &&
+				includeUninspectedVal.toLowerCase() === "true") ||
+			params.includeUninspected === true ||
+			paramsRaw.includeUninspected === true;
+
 		// If bounding box params are provided, construct a Socrata $where to restrict by bbox
 		const minLatN = parseNum(params.minLat ?? paramsRaw.minLat);
 		const maxLatN = parseNum(params.maxLat ?? paramsRaw.maxLat);
@@ -87,6 +97,21 @@ export const getRestaurantsFn = createServerFn({ method: "GET" })
 			params.maxLat = maxLatN;
 			params.minLng = minLngN;
 			params.maxLng = maxLngN;
+		}
+
+		// Treat Socrata's sentinel inspection date (1900-01-01) as "no inspection yet".
+		// If the caller explicitly asked for oldest-first sorting by inspection_date (ASC),
+		// exclude the sentinel rows so new/uninspected establishments don't appear as the oldest.
+		const orderVal = String(
+			params.$order ?? paramsRaw.$order ?? "",
+		).toLowerCase();
+		if (orderVal.includes("inspection_date") && orderVal.includes("asc")) {
+			const sentinelCond = "inspection_date > '1900-01-01T00:00:00.000'";
+			if (params.$where) {
+				params.$where = `(${String(params.$where)}) AND ${sentinelCond}`;
+			} else {
+				params.$where = sentinelCond;
+			}
 		}
 
 		// Remove internal-only keys that Socrata doesn't accept
@@ -131,24 +156,58 @@ export const getRestaurantsFn = createServerFn({ method: "GET" })
 
 		const result = await response.json();
 
-		// Validate API response is an array of restaurant objects
-		let rawRows: RestaurantRaw[];
-		try {
-			if (markerOnly) {
-				// marker-only responses return a trimmed set of fields; accept partial rows
-				rawRows = (await import("zod")).z
-					.array(restaurantRawSchema.partial())
-					.parse(result) as RestaurantRaw[];
-			} else {
-				rawRows = restaurantApiResponseSchema.parse(result);
-			}
-		} catch (err) {
+		// Validate API response is an array of restaurant objects.
+		// Use per-item safeParse so a few bad rows don't abort the whole response
+		let rawRows: RestaurantRaw[] = [];
+		if (!Array.isArray(result)) {
 			const snippet =
 				typeof result === "string"
 					? result.slice(0, 1000)
 					: JSON.stringify(result).slice(0, 1000);
 			throw new Error(
-				`API response was not an array of restaurant objects. url=${url.toString()} result_snippet=${snippet}`,
+				`API response was not an array. url=${url.toString()} result_snippet=${snippet}`,
+			);
+		}
+
+		if (markerOnly) {
+			// marker-only responses return a trimmed set of fields; accept partial rows
+			const schema = (await import("zod")).z.array(
+				restaurantRawSchema.partial(),
+			);
+			// try a quick full-parse first for performance
+			const full = schema.safeParse(result);
+			if (full.success) {
+				rawRows = full.data as RestaurantRaw[];
+			} else {
+				// fallback: validate per-item and keep valid ones
+				rawRows = (result as unknown[])
+					.map((r) => restaurantRawSchema.partial().safeParse(r))
+					.filter((p) => p.success)
+					.map((p) => p.data as RestaurantRaw);
+			}
+		} else {
+			// full responses: validate each row individually and keep valid rows
+			rawRows = (result as unknown[])
+				.map((r) => restaurantRawSchema.safeParse(r))
+				.filter((p) => p.success)
+				.map((p) => p.data as RestaurantRaw)
+				// Filter out sentinel inspection_date rows unless the caller opted in
+				.filter((row) => {
+					const insp = (row.inspection_date ?? "").slice(0, 10);
+					const isSentinel = insp === "1900-01-01";
+					if (isSentinel && !includeUninspected) return false;
+					// normalize sentinel to empty string so downstream code treats it as missing
+					if (isSentinel) {
+						(row as unknown as Record<string, unknown>).inspection_date = "";
+					}
+					return true;
+				});
+		}
+
+		if (!rawRows.length) {
+			const snippet = JSON.stringify(result.slice(0, 5)).slice(0, 1000);
+			throw new Error(
+				`API response contained no valid restaurant rows. url=${url.toString()} result_snippet=${snippet}`,
 			);
 		}
 		// Transform/group
@@ -227,14 +286,3 @@ export const restaurantQueries = {
 		});
 	},
 };
-
-// Export a small helper so the client can compute the same $limit used server-side
-export function computeLimitFromZoom(zoom?: number) {
-	if (typeof zoom !== "number" || !Number.isFinite(zoom)) return 3000;
-	const z = zoom;
-	if (z <= 4) return 3000;
-	if (z <= 8) return 3000;
-	if (z <= 11) return 1500;
-	if (z <= 14) return 800;
-	return 500;
-}

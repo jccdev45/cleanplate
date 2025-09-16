@@ -1,4 +1,5 @@
 import { DefaultLoader } from "@/components/default-loader";
+import { DismissibleAlert } from "@/components/dismissible-alert";
 import { columns } from "@/components/table/columns";
 import { DataTable } from "@/components/table/data-table";
 import {
@@ -15,7 +16,7 @@ import { restaurantSearchParamsSchema } from "@/schema/schema";
 import type { Restaurant } from "@/types/restaurant";
 import { restaurantQueries } from "@/utils/restaurant";
 import { rankItem } from "@tanstack/match-sorter-utils";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useSuspenseInfiniteQuery } from "@tanstack/react-query";
 import {
 	ErrorComponent,
 	type ErrorComponentProps,
@@ -28,17 +29,15 @@ import { useState } from "react";
 const SITE_URL = process.env.SITE_URL ?? "";
 
 export const Route = createFileRoute("/table")({
-	validateSearch: (search) =>
-		restaurantSearchParamsSchema.parse({
-			...search,
-			$limit: search.$limit ?? 5000,
-		}),
+	validateSearch: (search) => restaurantSearchParamsSchema.parse(search),
 	loaderDeps: (params) => ({ params }),
 	loader: async ({ context, deps }) => {
+		const query = restaurantQueries.infiniteList({ ...deps.params.search });
+
 		// Prefetch the restaurant list data on the server
-		await context.queryClient.ensureQueryData(
-			restaurantQueries.list({ ...deps.params.search, $limit: 5000 }),
-		);
+		await context.queryClient.ensureInfiniteQueryData({
+			...query,
+		});
 	},
 	head: () => ({
 		meta: [
@@ -81,25 +80,24 @@ function TableRoute() {
 
 	const [globalFilter, setGlobalFilter] = useState(searchParams?.$q || "");
 
-	const { data, isLoading, isError, isFetching } = useSuspenseQuery(
-		restaurantQueries.list(searchParams),
+	const { data, isLoading, isError, isFetching } = useSuspenseInfiniteQuery(
+		restaurantQueries.infiniteList(searchParams),
 	);
 
 	if (isLoading) return <DefaultLoader text="Loading table data..." />;
 	if (isError || !data) throw new Error("Failed to load table data");
 
-	const restaurants: Restaurant[] = data?.restaurants ?? [];
-	const totalCount = data?.count ?? 0;
+	const pages = data.pages ?? [];
+	const restaurants: Restaurant[] = pages.flatMap((p) => p.restaurants ?? []);
+	const totalCount =
+		pages[0]?.count ??
+		pages.reduce((sum, p) => sum + (p.restaurants?.length ?? 0), 0);
 
 	return (
 		<div className="min-h-screen p-6 space-y-2">
-			<Alert>
-				<AlertCircleIcon />
-				<AlertTitle>Heads up!</AlertTitle>
-				<AlertDescription>
-					Initial response times may be slow due to API restraints.
-				</AlertDescription>
-			</Alert>
+			<DismissibleAlert title="Heads up!">
+				Initial response times may be slow due to API restraints.
+			</DismissibleAlert>
 			<Input
 				value={globalFilter ?? ""}
 				onChange={(e) => setGlobalFilter(e.target.value)}

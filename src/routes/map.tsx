@@ -21,7 +21,7 @@ import {
 	createFileRoute,
 } from "@tanstack/react-router";
 import { Loader2 } from "lucide-react";
-import React from "react";
+import React, { Suspense } from "react";
 
 const SITE_URL = process.env.SITE_URL ?? "";
 
@@ -29,8 +29,6 @@ export const Route = createFileRoute("/map")({
 	validateSearch: (search) => restaurantSearchParamsSchema.parse(search),
 	loaderDeps: (params) => ({ params }),
 	loader: async ({ context, deps }) => {
-		// Prefetch the infinite restaurant list on the server so the client
-		// infinite query is hydrated and won't issue a duplicate first request.
 		// Normalize search params: ensure we have a zoom and markerOnly default
 		// so the server prefetch key matches what the client will request.
 		const raw = (deps.params.search ?? {}) as Record<string, unknown>;
@@ -74,7 +72,8 @@ export const Route = createFileRoute("/map")({
 
 function MapPage() {
 	const searchParams = Route.useSearch();
-	// Memoize the normalized search params so the infinite query key is stable
+
+	// Memoize the normalized search params so the query key is stable
 	// across renders. This prevents unnecessary refetches when the object
 	// identity changes but the values are the same.
 	const memoizedSearchParams = React.useMemo(() => {
@@ -82,9 +81,6 @@ function MapPage() {
 		return normalizeParams(raw) as unknown as RestaurantSearchParams;
 	}, [searchParams]);
 
-	// Use the project's typed infiniteList helper and enable keepPreviousData so
-	// changing search params (e.g. bbox while panning) doesn't trigger a full
-	// page loading overlay if we already have cached pages.
 	const listOptions = restaurantQueries.list(memoizedSearchParams);
 	const { data, isError, isFetching, isLoading } = useQuery({
 		...listOptions,
@@ -92,7 +88,7 @@ function MapPage() {
 
 	// If there's no cached data at all, show the full loader. Otherwise keep
 	// rendering the previous map while fetching new pages in the background.
-	if (isLoading && !data) return <DefaultLoader text="Loading map data..." />;
+	if (isLoading && !data) <DefaultLoader text="Loading map data..." />;
 	if (isError || !data) throw new Error("Failed to load map data");
 
 	return (
@@ -113,11 +109,39 @@ function MapPage() {
 						<Loader2 className="size-6 animate-spin text-primary" />
 					</div>
 				)}
-				{/* pass maxMarkers to allow RestaurantMap to limit rendering when dataset grows */}
-				<RestaurantMap
-					restaurants={data?.restaurants ?? []}
-					maxMarkers={2000}
-				/>
+				{/* pass maxMarkers to allow RestaurantMap to limit rendering when dataset grows
+					and slice the restaurants list on the route to avoid passing a very
+					large array into the map component which can cause heavy rendering
+					and long main-thread times. */}
+				<Suspense
+					fallback={
+						<div className="absolute inset-0 flex items-center justify-center">
+							<div className="p-2 bg-white/90 rounded shadow">Loading map…</div>
+						</div>
+					}
+				>
+					<RestaurantMap
+						restaurants={React.useMemo(() => {
+							const all = data?.restaurants ?? [];
+							// Keep a reasonable default cap. This reduces marker rendering
+							// costs and memory usage. If map's `maxMarkers` prop changes,
+							// this should be updated as well.
+							const DEFAULT_MAX_MARKERS = 1000;
+							return all.length > DEFAULT_MAX_MARKERS
+								? all.slice(0, DEFAULT_MAX_MARKERS)
+								: all;
+						}, [data?.restaurants])}
+						maxMarkers={1000}
+					/>
+				</Suspense>
+
+				{/* Show a subtle notice when results were truncated to improve UX */}
+				{data?.restaurants?.length > 1000 && (
+					<div className="absolute bottom-4 left-4 z-50 bg-yellow-50 text-yellow-800 p-2 rounded shadow">
+						Showing 1,000 of {data.restaurants.length} results. Refine filters
+						to see fewer markers.
+					</div>
+				)}
 			</main>
 		</div>
 	);

@@ -1,12 +1,15 @@
 import { DefaultCatchBoundary } from "@/components/default-catch-boundary";
 import { Footer } from "@/components/footer.tsx";
 import { NavMenu } from "@/components/nav-menu.tsx";
+import { ThemeProvider } from "@/components/theme-provider";
 import TanStackQueryLayout from "@/integrations/tanstack-query/layout.tsx";
 import {
 	SITE_DEFAULT_DESCRIPTION,
 	SITE_DEFAULT_OG_IMAGE,
 	SITE_NAME,
 } from "@/lib/constants";
+// Hybrid: server provides initial theme (cookie) and client ScriptOnce uses it to avoid FOUC
+import { getThemeServerFn } from "@/lib/theme";
 import appCss from "@/styles.css?url";
 import seo from "@/utils/seo";
 import type { QueryClient } from "@tanstack/react-query";
@@ -65,7 +68,10 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 
 	notFoundComponent: NotFoundComponent,
 	errorComponent: DefaultCatchBoundary,
-	shellComponent: RootDocument,
+	loader: async () => {
+		return getThemeServerFn();
+	},
+	shellComponent: RootWrapper,
 });
 
 function NotFoundComponent() {
@@ -86,15 +92,21 @@ function NotFoundComponent() {
 	);
 }
 
+function RootWrapper({ children }: { children: React.ReactNode }) {
+	// loader data is the theme (string 'light'|'dark')
+	const theme = Route.useLoaderData();
+	return (
+		<ThemeProvider theme={theme}>
+			<RootDocument>{children}</RootDocument>
+		</ThemeProvider>
+	);
+}
+
 function RootDocument({ children }: { children: React.ReactNode }) {
 	return (
 		<html lang="en" suppressHydrationWarning>
 			<head>
 				<HeadContent />
-				{/* Pre-hydration script: apply saved theme (dark) before CSS loads to avoid flash */}
-				<script>
-					{`try{(function(){var k='theme';var s=null;try{s=localStorage.getItem(k)}catch(e){}if(s==='dark'){document.documentElement.classList.add('dark');}else if(s==='light'){document.documentElement.classList.remove('dark')}else{try{if(window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches){document.documentElement.classList.add('dark')}}catch(e){}}})()}catch(e){};`}
-				</script>
 			</head>
 			<body>
 				<NavMenu />

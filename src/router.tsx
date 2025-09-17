@@ -1,6 +1,7 @@
 import { createRouter as createTanstackRouter } from "@tanstack/react-router";
 import { routerWithQueryClient } from "@tanstack/react-router-with-query";
 import * as TanstackQuery from "./integrations/tanstack-query/root-provider";
+import { PostHogProvider } from "posthog-js/react";
 
 // Import the generated route tree
 import { routeTree } from "./routeTree.gen";
@@ -23,9 +24,19 @@ export const createRouter = () => {
 			defaultPreloadStaleTime: 0,
 			Wrap: (props: { children: React.ReactNode }) => {
 				return (
-					<TanstackQuery.Provider {...rqContext}>
-						{props.children}
-					</TanstackQuery.Provider>
+					<PostHogProvider
+						apiKey={import.meta.env.VITE_PUBLIC_POSTHOG_KEY}
+						options={{
+							api_host: import.meta.env.VITE_PUBLIC_POSTHOG_HOST,
+							defaults: "2025-05-24",
+							capture_exceptions: true,
+							debug: import.meta.env.MODE === "development",
+						}}
+					>
+						<TanstackQuery.Provider {...rqContext}>
+							{props.children}
+						</TanstackQuery.Provider>
+					</PostHogProvider>
 				);
 			},
 		}),

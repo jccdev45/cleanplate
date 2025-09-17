@@ -19,6 +19,7 @@ import {
 	createRootRouteWithContext,
 } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
+import { Analytics } from "@vercel/analytics/react";
 
 const SITE_URL = process.env.SITE_URL ?? "";
 
@@ -121,6 +122,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 				<HeadContent />
 			</head>
 			<body>
+				<Analytics />
 				<NavMenu />
 				{children}
 				<Footer />

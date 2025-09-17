@@ -15,24 +15,14 @@ import { Link } from "@tanstack/react-router";
 import {
 	ChartBarIcon,
 	CopyrightIcon,
-	Disc,
 	MapIcon,
 	Menu,
 	Moon,
 	SheetIcon,
 	Sun,
-	Utensils,
 } from "lucide-react";
 import * as React from "react";
-
-function LogoIcon() {
-	return (
-		<div className="relative">
-			<Disc className="absolute size-8 text-foreground/30 fill-foreground/20" />
-			<Utensils className="size-8 text-foreground" />
-		</div>
-	);
-}
+import { LogoIcon } from "./logo";
 
 export function NavMenu() {
 	const LINKS = [
@@ -41,7 +31,8 @@ export function NavMenu() {
 			label: SITE_NAME,
 			icon: LogoIcon,
 			className: "space-x-2 flex items-center",
-			activeClassName: "underline decoration-primary underline-offset-4",
+			activeClassName:
+				"text-secondary underline decoration-primary underline-offset-4",
 			asLogo: true,
 		},
 		{

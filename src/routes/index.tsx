@@ -60,10 +60,9 @@ export const Route = createFileRoute("/")({
 				description: SITE_DEFAULT_DESCRIPTION,
 				image: SITE_URL
 					? `${SITE_URL}/images/sidewalk-dining.jpg`
-					: "/images/sidewalk-dining.jpg",
+					: "https://placehold.co/1200x630/0f172a/ffffff?font=roboto&text=CleanPlate",
 				url: SITE_URL ? `${SITE_URL}/` : undefined,
 			}),
-			{ name: "twitter:card", content: "summary_large_image" },
 		],
 		links: [...(SITE_URL ? [{ rel: "canonical", href: `${SITE_URL}/` }] : [])],
 	}),

@@ -15,6 +15,7 @@ import { SITE_NAME } from "@/lib/constants";
 import { restaurantSearchParamsSchema } from "@/schema/schema";
 import type { Restaurant } from "@/types/restaurant";
 import { restaurantQueries } from "@/utils/restaurant";
+import seo from "@/utils/seo";
 import { rankItem } from "@tanstack/match-sorter-utils";
 import { useSuspenseInfiniteQuery } from "@tanstack/react-query";
 import {
@@ -40,27 +41,15 @@ export const Route = createFileRoute("/table")({
 		});
 	},
 	head: () => ({
-		meta: [
-			{ title: `Table | ${SITE_NAME}` },
-			{
-				name: "description",
-				content:
-					"Browse the full dataset of NYC restaurant inspections in a searchable table. Filter and export results.",
-			},
-			{ property: "og:title", content: `Table | ${SITE_NAME}` },
-			{
-				property: "og:description",
-				content:
-					"Browse the full dataset of NYC restaurant inspections in a searchable table. Filter and export results.",
-			},
-			{
-				property: "og:image",
-				content: SITE_URL
-					? `${SITE_URL}/images/nathans.jpg`
-					: "/images/nathans.jpg",
-			},
-			{ name: "twitter:card", content: "summary_large_image" },
-		],
+		meta: seo({
+			title: `Table | ${SITE_NAME}`,
+			description:
+				"Browse the full dataset of NYC restaurant inspections in a searchable table. Filter and export results.",
+			image: SITE_URL
+				? `${SITE_URL}/images/nathans.jpg`
+				: "https://placehold.co/1200x630/0f172a/ffffff?font=roboto&text=Table",
+			url: SITE_URL ? `${SITE_URL}/table` : undefined,
+		}),
 		links: [
 			...(SITE_URL ? [{ rel: "canonical", href: `${SITE_URL}/table` }] : []),
 		],

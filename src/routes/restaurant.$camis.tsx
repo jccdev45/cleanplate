@@ -28,13 +28,12 @@ import {
 	gradeVariant,
 	mapInspectionView,
 } from "@/utils/restaurant-view";
+import seo from "@/utils/seo";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { ExternalLinkIcon, MapPinnedIcon, XCircleIcon } from "lucide-react";
 
 const SITE_URL = process.env.SITE_URL ?? "";
-
-// helper functions moved to `src/utils/restaurant-view.ts`
 
 export const Route = createFileRoute("/restaurant/$camis")({
 	component: RouteComponent,
@@ -48,28 +47,18 @@ export const Route = createFileRoute("/restaurant/$camis")({
 			? `${d.dba} in ${d.boro}. Latest grade: ${d.inspections?.[0]?.grade ?? "N/A"}. View inspection history and violations.`
 			: SITE_DEFAULT_DESCRIPTION;
 		const url = SITE_URL ? `${SITE_URL}/restaurant/${params.camis}` : undefined;
+
+		const placeholder = `https://placehold.co/1200x630/0f172a/ffffff?font=roboto&text=${d?.dba?.[0] ?? "R"}`;
 		const image = SITE_URL
 			? `${SITE_URL}${SITE_DEFAULT_OG_IMAGE}`
-			: SITE_DEFAULT_OG_IMAGE;
+			: placeholder;
 
 		return {
-			meta: [
-				{ title },
-				{ name: "description", content: description },
-				{ property: "og:title", content: title },
-				{ property: "og:description", content: description },
-				{ property: "og:image", content: image },
-				{ property: "og:type", content: "website" },
-				{ name: "twitter:card", content: "summary_large_image" },
-				{ name: "twitter:title", content: title },
-				{ name: "twitter:description", content: description },
-				{ name: "twitter:image", content: image },
-				...(url ? [{ property: "og:url", content: url }] : []),
-			],
+			meta: seo({ title, description, image, url }),
 			links: [...(url ? [{ rel: "canonical", href: url }] : [])],
 		};
 	},
-	validateSearch: (search) => search, // Allow any search params
+	validateSearch: (search) => search,
 });
 
 function RouteComponent() {

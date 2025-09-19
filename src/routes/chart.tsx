@@ -15,6 +15,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SITE_NAME } from "@/lib/constants";
 import { restaurantQueries } from "@/utils/restaurant";
+import seo from "@/utils/seo";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import {
 	ErrorComponent,
@@ -36,20 +37,15 @@ export const Route = createFileRoute("/chart")({
 		);
 	},
 	head: () => ({
-		meta: [
-			{ title: `Charts | ${SITE_NAME}` },
-			{
-				name: "description",
-				content:
-					"Visual dashboard for NYC restaurant inspection trends by borough, cuisine, and score.",
-			},
-			{ property: "og:title", content: `Charts | ${SITE_NAME}` },
-			{
-				property: "og:description",
-				content:
-					"Visual dashboard for NYC restaurant inspection trends by borough, cuisine, and score.",
-			},
-		],
+		meta: seo({
+			title: `Charts | ${SITE_NAME}`,
+			description:
+				"Visual dashboard for NYC restaurant inspection trends by borough, cuisine, and score.",
+			image: SITE_URL
+				? `${SITE_URL}/images/cosmic-diner.jpg`
+				: "https://placehold.co/1200x630/0f172a/ffffff?font=roboto&text=Charts",
+			url: SITE_URL ? `${SITE_URL}/chart` : undefined,
+		}),
 		links: [
 			...(SITE_URL ? [{ rel: "canonical", href: `${SITE_URL}/chart` }] : []),
 		],

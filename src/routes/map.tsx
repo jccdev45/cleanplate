@@ -14,6 +14,7 @@ import {
 } from "@/schema/schema";
 import { normalizeParams } from "@/utils/normalize-params";
 import { restaurantQueries } from "@/utils/restaurant";
+import seo from "@/utils/seo";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import {
 	ErrorComponent,
@@ -41,27 +42,15 @@ export const Route = createFileRoute("/map")({
 	},
 	ssr: "data-only",
 	head: () => ({
-		meta: [
-			{ title: `Map | ${SITE_NAME}` },
-			{
-				name: "description",
-				content:
-					"Interactive map of NYC restaurant inspection results. Filter by grade, borough, and inspection date.",
-			},
-			{ property: "og:title", content: `Map | ${SITE_NAME}` },
-			{
-				property: "og:description",
-				content:
-					"Interactive map of NYC restaurant inspection results. Filter by grade, borough, and inspection date.",
-			},
-			{
-				property: "og:image",
-				content: SITE_URL
-					? `${SITE_URL}/images/chinatown.jpg`
-					: "/images/chinatown.jpg",
-			},
-			{ name: "twitter:card", content: "summary_large_image" },
-		],
+		meta: seo({
+			title: `Map | ${SITE_NAME}`,
+			description:
+				"Interactive map of NYC restaurant inspection results. Filter by grade, borough, and inspection date.",
+			image: SITE_URL
+				? `${SITE_URL}/images/chinatown.jpg`
+				: "https://placehold.co/1200x630/0f172a/ffffff?font=roboto&text=Map",
+			url: SITE_URL ? `${SITE_URL}/map` : undefined,
+		}),
 		links: [
 			...(SITE_URL ? [{ rel: "canonical", href: `${SITE_URL}/map` }] : []),
 		],

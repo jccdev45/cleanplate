@@ -14,7 +14,7 @@ import {
 } from "@/schema/schema";
 import { normalizeParams } from "@/utils/normalize-params";
 import { restaurantQueries } from "@/utils/restaurant";
-import { useQuery } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import {
 	ErrorComponent,
 	type ErrorComponentProps,
@@ -35,7 +35,7 @@ export const Route = createFileRoute("/map")({
 		const raw = (deps.params.search ?? {}) as Record<string, unknown>;
 		const normalized = normalizeParams(raw);
 
-		await context.queryClient.prefetchQuery(
+		await context.queryClient.ensureQueryData(
 			restaurantQueries.list(normalized as unknown as RestaurantSearchParams),
 		);
 	},
@@ -84,7 +84,7 @@ function MapPage() {
 	}, [searchParams]);
 
 	const listOptions = restaurantQueries.list(memoizedSearchParams);
-	const { data, isError, isFetching, isLoading } = useQuery({
+	const { data, isError, isFetching, isLoading } = useSuspenseQuery({
 		...listOptions,
 	});
 

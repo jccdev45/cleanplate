@@ -1,6 +1,7 @@
+import { InspectionCard } from "@/components/restaurant/inspection-card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge, badgeVariants } from "@/components/ui/badge";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
 	Card,
@@ -9,11 +10,6 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
-import {
-	Collapsible,
-	CollapsibleContent,
-	CollapsibleTrigger,
-} from "@/components/ui/collapsible";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -21,112 +17,24 @@ import {
 	SITE_DEFAULT_OG_IMAGE,
 	SITE_NAME,
 } from "@/lib/constants";
-import { cn } from "@/lib/utils";
-import type { FullInspectionData, Restaurant } from "@/types/restaurant";
+import type { Restaurant } from "@/types/restaurant";
 import { restaurantQueries } from "@/utils/restaurant";
+import {
+	VIOLATION_KEYWORDS,
+	type ViewInspection,
+	computeStats,
+	filterInspections,
+	formatPhone,
+	gradeVariant,
+	mapInspectionView,
+} from "@/utils/restaurant-view";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { ExternalLinkIcon, MapPinnedIcon, XCircleIcon } from "lucide-react";
-import type * as React from "react";
 
 const SITE_URL = process.env.SITE_URL ?? "";
 
-// --- View helpers: keep non-UI logic out of JSX ---
-const VIOLATION_KEYWORDS = [
-	"Pest",
-	"Temperature",
-	"Sanitation",
-	"Hygiene",
-	"Contamination",
-	"Signage",
-];
-
-function formatPhone(p?: string | null) {
-	const phone = p ?? "";
-	const digits = phone.replace(/\D/g, "");
-	if (digits.length === 10)
-		return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
-	if (digits.length === 11 && digits.startsWith("1"))
-		return `+1 (${digits.slice(1, 4)}) ${digits.slice(4, 7)}-${digits.slice(7)}`;
-	return phone;
-}
-
-function filterInspections(
-	inspections: FullInspectionData[],
-	violationFilter?: string | null,
-) {
-	if (!violationFilter) return inspections;
-	const q = violationFilter.toLowerCase();
-	return inspections.filter((insp) =>
-		insp.violations?.some((v) =>
-			v.violation_description?.toLowerCase().includes(q),
-		),
-	);
-}
-
-function computeStats(inspections: FullInspectionData[]) {
-	const closureCount = inspections.filter((i) =>
-		i.action?.toLowerCase().includes("closed"),
-	).length;
-	const numericScores = inspections
-		.map((i) => Number(i.score))
-		.filter((s) => !Number.isNaN(s));
-	const avgScore = numericScores.length
-		? (numericScores.reduce((a, b) => a + b, 0) / numericScores.length).toFixed(
-				1,
-			)
-		: "N/A";
-	return { closureCount, avgScore };
-}
-
-function gradeVariant(g?: string) {
-	return g === "A"
-		? "success"
-		: g === "B"
-			? "secondary"
-			: g === "C"
-				? "destructive"
-				: "outline";
-}
-
-function getLeftFillColor(grade?: string) {
-	return grade === "A"
-		? "#16a34a"
-		: grade === "B"
-			? "#eab308"
-			: grade === "C"
-				? "#ef4444"
-				: "#9ca3af";
-}
-
-function getGradeBorderClass(grade?: string) {
-	return grade === "A"
-		? "border-t-green-500 border-r-green-500 border-b-green-500 border-l-transparent"
-		: grade === "B"
-			? "border-t-yellow-500 border-r-yellow-500 border-b-yellow-500 border-l-transparent"
-			: grade === "C"
-				? "border-t-red-500 border-r-red-500 border-b-red-500 border-l-transparent"
-				: "border-t-gray-400 border-r-gray-400 border-b-gray-400 border-l-transparent";
-}
-
-function mapInspectionView(
-	inspections: FullInspectionData[],
-	violationFilter?: string | null,
-) {
-	const q = violationFilter?.toLowerCase();
-	return inspections.map((insp, idx) => ({
-		...insp,
-		leftFillColor: getLeftFillColor(insp.grade),
-		gradeBorderClass: getGradeBorderClass(insp.grade),
-		matchesFilter: Boolean(
-			q &&
-				insp.violations?.some((v) =>
-					v.violation_description?.toLowerCase().includes(q),
-				),
-		),
-		animationDelay: `${idx * 80}ms`,
-	}));
-}
+// helper functions moved to `src/utils/restaurant-view.ts`
 
 export const Route = createFileRoute("/restaurant/$camis")({
 	component: RouteComponent,
@@ -194,18 +102,10 @@ function RouteComponent() {
 	const inspectionsForView = mapInspectionView(
 		filteredInspections,
 		violationFilter,
-	) as Array<
-		FullInspectionData & {
-			leftFillColor: string;
-			gradeBorderClass: string;
-			matchesFilter: boolean;
-			animationDelay: string;
-		}
-	>;
+	) as ViewInspection[];
 
 	return (
 		<main className="px-4 py-6 max-w-6xl mx-auto animate-in fade-in-0 duration-700">
-			{/* Responsive layout: 1 column mobile, 3 columns from md upward. Title card stacks until lg. */}
 			<div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 				<div className="md:col-span-1 min-w-0">
 					<Card className="w-full mb-6 shadow-lg border border-primary/20 py-4 md:py-6 md:sticky md:top-6 md:max-h-[calc(100vh-4rem)] md:overflow-auto">
@@ -221,7 +121,7 @@ function RouteComponent() {
 								</AvatarFallback>
 							</Avatar>
 							<div className="flex-1 text-center lg:text-left">
-								<CardTitle className="text-lg sm:text-2xl font-bold text-primary mb-1 animate-in slide-in-from-top-5 duration-500 ease-[cubic-bezier(.4,2,.3,1)]">
+								<CardTitle className="text-lg font-bold text-primary mb-1 animate-in slide-in-from-top-5 duration-500 ease-[cubic-bezier(.4,2,.3,1)]">
 									{restaurant.dba}
 								</CardTitle>
 								<CardDescription className="flex flex-wrap gap-2 items-center px-0 md:px-0">
@@ -231,31 +131,26 @@ function RouteComponent() {
 									<Badge>{restaurant.boro}</Badge>
 								</CardDescription>
 							</div>
-							<div>
-								{restaurant.latitude && restaurant.longitude && (
-									<Button asChild variant="outline" size="sm">
-										<Link
-											to="/map"
-											target="_blank"
-											aria-label={`View ${restaurant.dba} on map`}
-											search={{
-												latitude: Number(restaurant.latitude),
-												longitude: Number(restaurant.longitude),
-												camis: restaurant.camis,
-												zoom: 15,
-											}}
-										>
-											<MapPinnedIcon className="size-5 mr-2" />
-											Map
-											<ExternalLinkIcon className="size-3 ml-auto" />
-										</Link>
-									</Button>
-								)}
-							</div>
+							{restaurant.latitude && restaurant.longitude && (
+								<Button asChild variant="outline" size="sm">
+									<Link
+										to="/map"
+										target="_blank"
+										aria-label={`View ${restaurant.dba} on map`}
+										search={{
+											latitude: Number(restaurant.latitude),
+											longitude: Number(restaurant.longitude),
+											camis: restaurant.camis,
+											zoom: 15,
+										}}
+									>
+										<MapPinnedIcon className="size-5 mr-2" />
+										Map
+										<ExternalLinkIcon className="size-3 ml-auto" />
+									</Link>
+								</Button>
+							)}
 						</CardHeader>
-						{
-							// Use precomputed stats and inspectionsForView above — keep JSX pure
-						}
 						<CardContent>
 							<div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-3 text-balance">
 								{/* Address & Contact */}
@@ -345,31 +240,33 @@ function RouteComponent() {
 				</div>
 				<div className="md:col-span-2">
 					<section className="w-full space-y-2 px-2 md:px-0">
-						<h3 className="text-sm font-semibold">
-							Filter Violations by Keyword
-						</h3>
-						<div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 bg-muted p-2 rounded">
-							{VIOLATION_KEYWORDS.map((keyword) => (
-								<Button
-									key={keyword}
-									variant={violationFilter === keyword ? "outline" : "ghost"}
-									onClick={() =>
-										setViolationFilter(
-											violationFilter === keyword ? null : keyword,
-										)
-									}
-									size="sm"
-									className="capitalize relative"
-								>
-									{keyword}
-									{violationFilter === keyword && (
-										<XCircleIcon
-											className="absolute -top-1 -right-1 size-4 fill-white text-destructive"
-											onClick={() => setViolationFilter(null)}
-										/>
-									)}
-								</Button>
-							))}
+						<div className="sticky top-4">
+							<h3 className="text-sm font-semibold">
+								Filter Violations by Keyword
+							</h3>
+							<div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 bg-muted p-2 rounded">
+								{VIOLATION_KEYWORDS.map((keyword) => (
+									<Button
+										key={keyword}
+										variant={violationFilter === keyword ? "outline" : "ghost"}
+										onClick={() =>
+											setViolationFilter(
+												violationFilter === keyword ? null : keyword,
+											)
+										}
+										size="sm"
+										className="capitalize relative"
+									>
+										{keyword}
+										{violationFilter === keyword && (
+											<XCircleIcon
+												className="absolute -top-1 -right-1 size-4 fill-white text-destructive"
+												onClick={() => setViolationFilter(null)}
+											/>
+										)}
+									</Button>
+								))}
+							</div>
 						</div>
 						<h2 className="font-semibold mb-4">
 							Inspection History ({filteredInspections.length} of{" "}
@@ -394,116 +291,13 @@ function RouteComponent() {
 									</AlertDescription>
 								</Alert>
 							) : (
-								inspectionsForView.map(
-									(
-										insp: FullInspectionData & {
-											leftFillColor: string;
-											gradeBorderClass: string;
-											matchesFilter: boolean;
-											animationDelay: string;
-										},
-									) => {
-										return (
-											<Card
-												key={insp.inspectionId}
-												className={cn(
-													"transition-all duration-300 ease-in-out border-l-4 animate-in zoom-in-95 hover:shadow-lg border-left-fill rounded-none",
-													insp.gradeBorderClass,
-												)}
-												style={
-													{
-														animationDelay: insp.animationDelay,
-														"--left-fill": insp.leftFillColor,
-													} as React.CSSProperties
-												}
-												aria-label={`Inspection on ${insp.inspection_date.slice(0, 10)}`}
-											>
-												<CardHeader className="flex flex-row items-center justify-between gap-2">
-													<CardTitle className="text-base font-bold">
-														{insp.inspection_date.slice(0, 10)}
-													</CardTitle>
-													<Badge
-														variant={
-															insp.grade === "A"
-																? "success"
-																: insp.grade === "B"
-																	? "secondary"
-																	: insp.grade === "C"
-																		? "destructive"
-																		: "outline"
-														}
-														className="text-xs px-2 py-1"
-													>
-														Grade: {insp.grade || "N/A"}
-													</Badge>
-												</CardHeader>
-												<CardContent>
-													<div className="flex flex-col gap-2">
-														<Badge
-															className={cn(
-																"w-fit",
-																insp.critical_flag === "Critical"
-																	? badgeVariants({ variant: "destructive" })
-																	: insp.critical_flag === "Not Critical"
-																		? badgeVariants({ variant: "secondary" })
-																		: badgeVariants({ variant: "outline" }),
-															)}
-														>
-															{insp.critical_flag}
-														</Badge>
-														<div className="text-sm">
-															<span className="font-medium">Score:</span>{" "}
-															{insp.score ?? "N/A"}
-														</div>
-														{insp.action && (
-															<div className="text-xs text-muted-foreground">
-																<span className="font-medium">Action:</span>{" "}
-																{insp.action}
-															</div>
-														)}
-														{insp.violations.length > 0 && (
-															<div>
-																<span className="font-medium">Violations:</span>
-																{/* Use Collapsible to avoid long walls of text. If a violationFilter is active and matches this inspection, start open by default. */}
-																<Collapsible
-																	open={Boolean(
-																		violationFilter && insp.matchesFilter,
-																	)}
-																>
-																	<div className="mt-1">
-																		<CollapsibleTrigger className="text-sm underline">
-																			{`${insp.violations.length} violation${insp.violations.length > 1 ? "s" : ""}`}
-																		</CollapsibleTrigger>
-																		<CollapsibleContent>
-																			<ul className="list-disc ml-6 mt-1 text-xs">
-																				{insp.violations.map(
-																					(v: {
-																						violation_code: string;
-																						violation_description: string;
-																					}) => (
-																						<li
-																							key={`${insp.inspectionId}-${v.violation_code}`}
-																							className="mb-1 break-words"
-																						>
-																							<span className="font-semibold text-red-600">
-																								{v.violation_code}
-																							</span>
-																							: {v.violation_description}
-																						</li>
-																					),
-																				)}
-																			</ul>
-																		</CollapsibleContent>
-																	</div>
-																</Collapsible>
-															</div>
-														)}
-													</div>
-												</CardContent>
-											</Card>
-										);
-									},
-								)
+								inspectionsForView.map((insp: ViewInspection) => (
+									<InspectionCard
+										key={insp.inspectionId}
+										insp={insp}
+										violationFilter={violationFilter}
+									/>
+								))
 							)}
 						</div>
 					</section>

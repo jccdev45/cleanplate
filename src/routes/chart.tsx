@@ -244,7 +244,7 @@ function RouteComponent() {
 			{/* Charts grid using extracted components */}
 			<section className="mb-10">
 				<Tabs defaultValue="cuisine" className="w-full">
-					<TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-6">
+					<TabsList className="flex items-center justify-start flex-wrap h-auto space-y-1">
 						<TabsTrigger value="cuisine">Cuisine</TabsTrigger>
 						<TabsTrigger value="trends">Trends</TabsTrigger>
 						<TabsTrigger value="borough">Borough</TabsTrigger>

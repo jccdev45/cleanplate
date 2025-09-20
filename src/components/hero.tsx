@@ -36,6 +36,10 @@ function HeroMedia({
 		src: string;
 		type: string;
 		alt: string;
+		/** Optional srcSet string for responsive images */
+		srcSet?: string;
+		/** Optional sizes attribute corresponding to srcSet */
+		sizes?: string;
 	}>;
 	autoPlay?: boolean;
 } & React.HTMLAttributes<HTMLDivElement>) {
@@ -59,6 +63,29 @@ function HeroMedia({
 			if (rafRef.current) window.cancelAnimationFrame(rafRef.current);
 		};
 	}, [autoPlay, images.length, step]);
+
+	// Preload the primary image to help LCP. We only do this in browsers that support
+	// document.head and when there's at least one image. This is safe even if the image
+	// is a video — we only preload when the first media is an image.
+	React.useEffect(() => {
+		try {
+			if (!images || images.length === 0) return;
+			const first = images[0];
+			if (first.type !== "image") return;
+			const link = document.createElement("link");
+			link.rel = "preload";
+			link.as = "image";
+			link.href = first.src;
+			// If a srcSet is provided, include it; some browsers use fetchPriority instead.
+			if (first.srcSet) link.setAttribute("imagesrcset", first.srcSet);
+			document.head.appendChild(link);
+			return () => {
+				document.head.removeChild(link);
+			};
+		} catch (e) {
+			// ignore in non-browser environments
+		}
+	}, [images]);
 
 	return (
 		<>
@@ -86,13 +113,22 @@ function HeroMedia({
 							<source src={image.src} type="video/mp4" />
 						</video>
 					) : (
-						<img
-							src={image.src}
-							alt={image.alt || ""}
-							decoding="async"
-							loading="eager"
-							className="size-full object-cover object-bottom"
-						/>
+						// Use <picture> for optional srcSet / type variants (webp/avif)
+						<picture>
+							{image.srcSet ? (
+								// If the caller supplied a srcSet and sizes, we let the browser pick the best
+								// source. Keep this optional to preserve backwards compatibility.
+								<source srcSet={image.srcSet} sizes={image.sizes} />
+							) : null}
+							<img
+								src={image.src}
+								alt={image.alt || ""}
+								decoding="async"
+								loading={index === 0 ? "eager" : "lazy"}
+								fetchPriority={index === 0 ? "high" : "low"}
+								className="size-full object-cover object-bottom"
+							/>
+						</picture>
 					)}
 				</div>
 			))}

@@ -1,3 +1,10 @@
+import {
+	parseNum,
+	retryFetch,
+	sanitizeSnippet,
+	stripQuotes,
+} from "@/lib/fetch-utils";
+import { sendPosthogEvent } from "@/lib/posthog";
 import { groupRestaurants } from "@/lib/utils";
 import {
 	type RestaurantRaw,
@@ -5,6 +12,7 @@ import {
 	restaurantRawSchema,
 	restaurantSearchParamsSchema,
 } from "@/schema/schema";
+import type { Restaurant } from "@/types/restaurant";
 import {
 	infiniteQueryOptions,
 	keepPreviousData,
@@ -25,20 +33,6 @@ export const getRestaurantsFn = createServerFn({ method: "GET" })
 		// Copy into a mutable params object so we can add $select and defaults without breaking types
 		const paramsRaw: Record<string, unknown> = {
 			...(data as Record<string, unknown>),
-		};
-
-		// Helper: strip surrounding quotes and whitespace
-		const stripQuotes = (v: unknown) => {
-			const s = String(v).trim();
-			return s.replace(/^"+|"+$/g, "");
-		};
-
-		// Helper: parse number safely after stripping quotes
-		const parseNum = (v: unknown) => {
-			const s = stripQuotes(v);
-			if (s === undefined) return undefined;
-			const n = Number(s);
-			return Number.isFinite(n) ? n : undefined;
 		};
 
 		// Build a sanitized params object for URL generation
@@ -141,16 +135,25 @@ export const getRestaurantsFn = createServerFn({ method: "GET" })
 			url.search = new URLSearchParams(entries).toString();
 		}
 
-		const response = await fetch(url.toString(), {
+		// Use the shared retryFetch helper which implements exponential backoff for 5xx.
+		const response = await retryFetch(url.toString(), {
 			headers: {
 				Accept: "application/json",
 				...(appToken ? { "X-App-Token": appToken } : {}),
 			},
 		});
+
 		if (!response.ok) {
 			const text = await response.text();
+			const snippet = sanitizeSnippet(text, 1000);
+			void sendPosthogEvent("socrata_error", {
+				url: url.toString(),
+				status: response.status,
+				statusText: response.statusText,
+				snippet,
+			});
 			throw new Error(
-				`Socrata request failed: ${response.status} ${response.statusText} url=${url.toString()} body=${text.slice(0, 1000)}`,
+				`Socrata request failed: ${response.status} ${response.statusText} url=${url.toString()} body_snippet=${snippet}`,
 			);
 		}
 
@@ -205,14 +208,26 @@ export const getRestaurantsFn = createServerFn({ method: "GET" })
 		}
 
 		if (!rawRows.length) {
-			const snippet = JSON.stringify(result.slice(0, 5)).slice(0, 1000);
-			throw new Error(
-				`API response contained no valid restaurant rows. url=${url.toString()} result_snippet=${snippet}`,
+			const snippet = JSON.stringify((result as unknown[]).slice(0, 5)).slice(
+				0,
+				1000,
 			);
+			try {
+				console.warn(
+					`Socrata returned no valid rows for request. url=${url.toString()} result_snippet=${snippet}`,
+				);
+			} catch (_err) {
+				// ignore logging failures in constrained runtimes
+			}
+			const restaurants: Restaurant[] = [];
+			return {
+				restaurants,
+				count: 0,
+				nextOffset: undefined,
+			};
 		}
-		// Transform/group
+
 		const restaurants = groupRestaurants(rawRows);
-		// return grouped restaurants
 
 		return {
 			restaurants,

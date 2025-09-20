@@ -297,18 +297,22 @@ export function RestaurantMap({ restaurants }: RestaurantMapProps) {
 						disabled={Boolean(isFetching)}
 						onClick={() => {
 							if (!pendingBounds) return;
+							// Round numeric values to stable precision before writing to URL
+							const roundLatLng = (v: number) => Number(v.toFixed(6)); // ~10cm precision
+							const roundZoom = (z: number) => Number(z.toFixed(3));
+
 							// Commit the pending bounds to the URL which triggers the route to fetch
 							navigate({
 								search: (prev) => ({
 									...(prev || {}),
-									minLat: pendingBounds.minLat,
-									maxLat: pendingBounds.maxLat,
-									minLng: pendingBounds.minLng,
-									maxLng: pendingBounds.maxLng,
+									minLat: roundLatLng(pendingBounds.minLat),
+									maxLat: roundLatLng(pendingBounds.maxLat),
+									minLng: roundLatLng(pendingBounds.minLng),
+									maxLng: roundLatLng(pendingBounds.maxLng),
 									markerOnly: "1",
-									zoom: pendingBounds.zoom,
-									latitude: pendingBounds.latitude,
-									longitude: pendingBounds.longitude,
+									zoom: roundZoom(pendingBounds.zoom),
+									latitude: roundLatLng(pendingBounds.latitude),
+									longitude: roundLatLng(pendingBounds.longitude),
 								}),
 							});
 							// hide pendingBounds; overlay will be visible while isFetching > 0

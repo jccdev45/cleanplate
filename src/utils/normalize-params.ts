@@ -1,3 +1,4 @@
+import { parseNum, stripQuotes } from "@/lib/fetch-utils";
 import type { RestaurantSearchParams } from "@/schema/schema";
 
 // Keys that are client-only and must not be forwarded to Socrata. NOTE:
@@ -7,19 +8,7 @@ import type { RestaurantSearchParams } from "@/schema/schema";
 // Socrata, so keeping it here only affects cache-keying.
 const INTERNAL_KEYS = ["latitude", "longitude", "markerOnly"];
 
-function stripQuotes(v: unknown) {
-	if (v === undefined || v === null) return undefined;
-	return String(v)
-		.trim()
-		.replace(/^"+|"+$/g, "");
-}
-
-function parseNum(v: unknown) {
-	const s = stripQuotes(v);
-	if (s === undefined) return undefined;
-	const n = Number(s);
-	return Number.isFinite(n) ? n : undefined;
-}
+// stripQuotes/parseNum are provided by '@/lib/fetch-utils'
 
 export function normalizeParams(raw?: Record<string, unknown>) {
 	const inObj = (raw ?? {}) as Record<string, unknown>;

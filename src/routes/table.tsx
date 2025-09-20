@@ -33,9 +33,14 @@ export const Route = createFileRoute("/table")({
 	loader: async ({ context, deps }) => {
 		const query = restaurantQueries.infiniteList({ ...deps.params.search });
 
-		await context.queryClient.ensureInfiniteQueryData({
-			...query,
-		});
+		try {
+			await context.queryClient.ensureInfiniteQueryData({
+				...query,
+			});
+		} catch (err) {
+			console.error("Prefetch failed for /table loader", err);
+			return { remoteDown: true };
+		}
 	},
 	head: () => ({
 		meta: seo({
@@ -103,7 +108,8 @@ function TableRoute() {
 	);
 
 	if (isLoading) return <DefaultLoader text="Loading table data..." />;
-	if (isError || !data) throw new Error("Failed to load table data");
+
+	const remoteDown = isError || !data;
 
 	const pages = data.pages ?? [];
 	const restaurants: Restaurant[] = pages.flatMap((p) => p.restaurants ?? []);
@@ -113,6 +119,12 @@ function TableRoute() {
 
 	return (
 		<div className="min-h-screen p-6 space-y-2">
+			{remoteDown ? (
+				<DismissibleAlert title="Data temporarily unavailable">
+					The restaurant data is temporarily unavailable. We're working on it —
+					try again later.
+				</DismissibleAlert>
+			) : null}
 			<DismissibleAlert title="Heads up!">
 				Initial response times may be slow due to API restraints.
 			</DismissibleAlert>
@@ -140,9 +152,11 @@ function TableRoute() {
 }
 
 function TableErrorComponent({ error }: ErrorComponentProps) {
+	const isDev = Boolean(import.meta.env?.DEV);
+
 	return (
 		<div className="min-h-screen p-6 space-y-4">
-			<ErrorComponent error={error} />
+			{isDev ? <ErrorComponent error={error} /> : null}
 			<Alert variant="destructive">
 				<AlertCircleIcon />
 				<div className="flex flex-col">
@@ -151,28 +165,30 @@ function TableErrorComponent({ error }: ErrorComponentProps) {
 						We had trouble loading restaurant inspection data. You can try again
 						or check your connection. If the problem persists, contact support.
 					</AlertDescription>
-					<div className="mt-3 flex flex-col items-center gap-2">
-						<Accordion
-							className="text-xs text-muted-foreground"
-							type="single"
-							collapsible
-						>
-							<AccordionItem value="technical-details">
-								<Button variant="outline" asChild>
-									<AccordionTrigger className="cursor-pointer">
-										Technical Details
-									</AccordionTrigger>
-								</Button>
-								<AccordionContent>
-									<pre className="whitespace-pre-wrap mt-2 text-[12px]">
-										{error instanceof Error
-											? error.message
-											: JSON.stringify(error, null, 2)}
-									</pre>
-								</AccordionContent>
-							</AccordionItem>
-						</Accordion>
-					</div>
+					{isDev ? (
+						<div className="mt-3 flex flex-col items-center gap-2">
+							<Accordion
+								className="text-xs text-muted-foreground"
+								type="single"
+								collapsible
+							>
+								<AccordionItem value="technical-details">
+									<Button variant="outline" asChild>
+										<AccordionTrigger className="cursor-pointer">
+											Technical Details
+										</AccordionTrigger>
+									</Button>
+									<AccordionContent>
+										<pre className="whitespace-pre-wrap mt-2 text-[12px]">
+											{error instanceof Error
+												? error.message
+												: JSON.stringify(error, null, 2)}
+										</pre>
+									</AccordionContent>
+								</AccordionItem>
+							</Accordion>
+						</div>
+					) : null}
 				</div>
 			</Alert>
 		</div>

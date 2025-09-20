@@ -36,9 +36,15 @@ export const Route = createFileRoute("/map")({
 		const raw = (deps.params.search ?? {}) as Record<string, unknown>;
 		const normalized = normalizeParams(raw);
 
-		await context.queryClient.ensureQueryData(
-			restaurantQueries.list(normalized as unknown as RestaurantSearchParams),
-		);
+		try {
+			await context.queryClient.ensureQueryData(
+				restaurantQueries.list(normalized as unknown as RestaurantSearchParams),
+			);
+		} catch (err) {
+			// Prefetch failed (API down). Swallow the error so the route shell can render.
+			console.error("Prefetch failed for /map loader", err);
+			return { remoteDown: true };
+		}
 	},
 	ssr: "data-only",
 	head: () => ({
@@ -80,7 +86,10 @@ function MapPage() {
 	// If there's no cached data at all, show the full loader. Otherwise keep
 	// rendering the previous map while fetching new pages in the background.
 	if (isLoading && !data) <DefaultLoader text="Loading map data..." />;
-	if (isError || !data) throw new Error("Failed to load map data");
+
+	// If the query errored (for example planned maintenance of the API),
+	// don't throw — render the page shell and show a friendly inline alert.
+	const remoteDown = isError || !data;
 
 	return (
 		<div className="flex flex-col h-[calc(100vh-64px)]">
@@ -108,6 +117,14 @@ function MapPage() {
 			</div>
 			<div className="flex items-center px-4">
 				<MapFilters />
+				{remoteDown ? (
+					<div className="ml-4">
+						<DismissibleAlert title="Data temporarily unavailable">
+							The restaurant data is temporarily unavailable. We're working on
+							it — you can still browse the map shell and try again later.
+						</DismissibleAlert>
+					</div>
+				) : null}
 				<div className="flex flex-col flex-1 text-center p-2">
 					<h1 className="text-xl font-bold mb-2">
 						Displaying {data?.count ?? 0} results
@@ -219,9 +236,11 @@ function MapPage() {
 }
 
 function MapErrorComponent({ error }: ErrorComponentProps) {
+	const isDev = Boolean(import.meta.env?.DEV);
+
 	return (
 		<div className="min-h-screen p-6 space-y-4">
-			<ErrorComponent error={error} />
+			{isDev ? <ErrorComponent error={error} /> : null}
 			<div className="mt-3 flex flex-col items-center gap-2">
 				<p className="text-muted-foreground">
 					We had trouble loading the map. You can try again or check your

@@ -5,6 +5,7 @@ import { CuisineTrendsAreaChart } from "@/components/charts/cuisine-trends-area-
 import { GradePieChart } from "@/components/charts/grade-pie-chart";
 import { ScoreBarChart } from "@/components/charts/score-bar-chart";
 import { DefaultLoader } from "@/components/default-loader";
+import { DismissibleAlert } from "@/components/dismissible-alert";
 import {
 	Card,
 	CardContent,
@@ -29,12 +30,17 @@ const $limit = 10000;
 
 export const Route = createFileRoute("/chart")({
 	loader: async ({ context }) => {
-		// Prefetch the restaurant list data on the server. Pass an explicit
-		// params object so the server validator (Zod) receives an object
-		// instead of undefined.
-		await context.queryClient.ensureQueryData(
-			restaurantQueries.list({ $limit }),
-		);
+		// Prefetch the restaurant list data on the server. If the API is down
+		// (planned maintenance), swallow the error so the route can still render
+		// the page shell and show a friendly message.
+		try {
+			await context.queryClient.ensureQueryData(
+				restaurantQueries.list({ $limit }),
+			);
+		} catch (err) {
+			console.error("Prefetch failed for /chart loader", err);
+			return { remoteDown: true };
+		}
 	},
 	head: () => ({
 		meta: seo({
@@ -61,7 +67,8 @@ function RouteComponent() {
 	);
 
 	if (isLoading) return <DefaultLoader text="Loading chart data..." />;
-	if (isError || !data) throw new Error("Failed to load chart data");
+
+	const remoteDown = isError || !data;
 
 	const {
 		cuisineChartData,
@@ -186,6 +193,14 @@ function RouteComponent() {
 
 	return (
 		<main className="container mx-auto p-4 sm:p-6 lg:p-8">
+			{remoteDown ? (
+				<div className="mb-6">
+					<DismissibleAlert title="Data temporarily unavailable">
+						The restaurant data is temporarily unavailable. We're working on it
+						— try again later.
+					</DismissibleAlert>
+				</div>
+			) : null}
 			<div className="text-center mb-12">
 				<h1 className="text-4xl font-bold tracking-tight lg:text-5xl">
 					Restaurant Data Dashboard
@@ -280,9 +295,11 @@ function RouteComponent() {
 }
 
 function ChartErrorComponent({ error }: ErrorComponentProps) {
+	const isDev = Boolean(import.meta.env?.DEV);
+
 	return (
 		<div className="min-h-screen p-6 space-y-4">
-			<ErrorComponent error={error} />
+			{isDev ? <ErrorComponent error={error} /> : null}
 			<div className="mt-3 flex flex-col items-center gap-2">
 				<p className="text-muted-foreground">
 					We had trouble loading the chart data. You can try again or check your

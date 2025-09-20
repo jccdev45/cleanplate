@@ -1,3 +1,4 @@
+import { DismissibleAlert } from "@/components/dismissible-alert";
 import {
 	Hero,
 	HeroCTA,
@@ -24,34 +25,40 @@ import {
 	type ErrorComponentProps,
 	createFileRoute,
 } from "@tanstack/react-router";
+import { useLoaderData } from "@tanstack/react-router";
 import { MapIcon } from "lucide-react";
 
 const SITE_URL = process.env.SITE_URL ?? "";
 
 export const Route = createFileRoute("/")({
 	loader: async ({ context }) => {
-		const [topRestaurants, worstRestaurants] = await Promise.all([
-			context.queryClient.ensureQueryData(
-				restaurantQueries.list({
-					grade: "A",
-					$limit: 6,
-					$order: "inspection_date DESC",
-					$where: "grade = 'A'",
-				}),
-			),
-			context.queryClient.ensureQueryData(
-				restaurantQueries.list({
-					$limit: 50,
-					$order: "score DESC",
-					$where: "score > 13 AND inspection_date > '2025-01-01'",
-				}),
-			),
-		]);
+		try {
+			const [topRestaurants, worstRestaurants] = await Promise.all([
+				context.queryClient.ensureQueryData(
+					restaurantQueries.list({
+						grade: "A",
+						$limit: 6,
+						$order: "inspection_date DESC",
+						$where: "grade = 'A'",
+					}),
+				),
+				context.queryClient.ensureQueryData(
+					restaurantQueries.list({
+						$limit: 50,
+						$order: "score DESC",
+						$where: "score > 13 AND inspection_date > '2025-01-01'",
+					}),
+				),
+			]);
 
-		return {
-			top: topRestaurants.restaurants,
-			worst: worstRestaurants.restaurants,
-		};
+			return {
+				top: topRestaurants.restaurants,
+				worst: worstRestaurants.restaurants,
+			};
+		} catch (err) {
+			console.error("Prefetch failed for / loader", err);
+			return { remoteDown: true };
+		}
 	},
 	head: () => ({
 		meta: [
@@ -72,12 +79,38 @@ export const Route = createFileRoute("/")({
 });
 
 function IndexErrorComponent({ error }: ErrorComponentProps) {
-	return <ErrorComponent error={error} />;
+	const isDev = Boolean(import.meta.env?.DEV);
+
+	if (isDev) return <ErrorComponent error={error} />;
+
+	return (
+		<main className="container max-w-3xl mx-auto py-12 px-4">
+			<div className="text-center">
+				<h1 className="text-2xl font-bold mb-4">Something went wrong</h1>
+				<p className="text-muted-foreground">
+					We had trouble loading the page. You can try again or check your
+					connection. If the problem persists, contact support.
+				</p>
+			</div>
+		</main>
+	);
 }
 
 function App() {
+	const loaderData = useLoaderData({ from: "/" }) as
+		| { remoteDown?: boolean }
+		| undefined;
+
 	return (
 		<main className="container max-w-5xl mx-auto py-12 px-4">
+			{loaderData?.remoteDown ? (
+				<div className="mb-6">
+					<DismissibleAlert title="Data temporarily unavailable">
+						The restaurant data is temporarily unavailable. We're working on it
+						— try again later.
+					</DismissibleAlert>
+				</div>
+			) : null}
 			{/* Hero Section */}
 			<Hero className="mb-16">
 				<HeroMedia images={HERO_IMAGES} />

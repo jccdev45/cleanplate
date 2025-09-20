@@ -8,14 +8,12 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useIsFetching } from "@tanstack/react-query";
 import {
 	type ColumnDef,
-	type ColumnFiltersState,
-	type FilterFn,
 	type PaginationState,
 	flexRender,
 	getCoreRowModel,
-	getFilteredRowModel,
 	getPaginationRowModel,
 	getSortedRowModel,
 	useReactTable,
@@ -26,52 +24,45 @@ import {
 	ChevronRight,
 	ChevronsLeft,
 	ChevronsRight,
+	X,
 } from "lucide-react";
 import React from "react";
 
 interface DataTableProps<TData, TValue> {
 	columns: ColumnDef<TData, TValue>[];
 	data: TData[];
-	isFetching?: boolean;
-	globalFilter: string;
-	onGlobalFilterChange: (value: string) => void;
-	fuzzyFilter?: FilterFn<TData>;
+	// server-driven filters (parent controls via URL)
+	filters?: { boro?: string; grade?: string[]; zipcode?: string };
+	onFiltersChange?: (filters: {
+		boro?: string;
+		grade?: string[];
+		zipcode?: string | undefined;
+	}) => void;
 	totalCount: number;
 }
 
 export function DataTable<TData, TValue>({
 	columns,
 	data,
-	isFetching,
-	globalFilter,
-	onGlobalFilterChange,
-	fuzzyFilter,
+	// isFetching,
 	totalCount,
+	filters,
+	onFiltersChange,
 }: DataTableProps<TData, TValue>) {
-	const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-		[],
-	);
+	const isFetching = useIsFetching();
+	// All filtering is handled server-side via `filters` + `onFiltersChange`.
 	const [pagination, setPagination] = React.useState<PaginationState>({
 		pageIndex: 0,
 		pageSize: 10,
 	});
-
 	const table = useReactTable({
 		data,
 		columns,
-		// biome-ignore lint/suspicious/noExplicitAny: <explanation>
-		filterFns: { fuzzy: fuzzyFilter as FilterFn<any> },
 		state: {
-			columnFilters,
-			globalFilter,
 			pagination,
 		},
-		onColumnFiltersChange: setColumnFilters,
-		onGlobalFilterChange: onGlobalFilterChange,
 		onPaginationChange: setPagination,
-		globalFilterFn: fuzzyFilter ?? undefined,
 		getCoreRowModel: getCoreRowModel(),
-		getFilteredRowModel: getFilteredRowModel(),
 		getSortedRowModel: getSortedRowModel(),
 		getPaginationRowModel: getPaginationRowModel(),
 	});
@@ -87,6 +78,99 @@ export function DataTable<TData, TValue>({
 
 	return (
 		<>
+			{/* Filter toolbar: Grade, Borough, Zipcode */}
+			<div className="mb-4 flex gap-2 items-center">
+				{/* Grade multi-select with clear button */}
+				<div className="flex items-center gap-1">
+					<Select
+						value={JSON.stringify(filters?.grade ?? [])}
+						onValueChange={(v) => {
+							const parsed = JSON.parse(v || "[]") as string[];
+							onFiltersChange?.({
+								boro: filters?.boro,
+								grade: parsed,
+								zipcode: filters?.zipcode,
+							});
+						}}
+					>
+						<SelectTrigger className="w-48">
+							<SelectValue placeholder="Filter grades (A,B,C)" />
+						</SelectTrigger>
+						<SelectContent>
+							{["A", "B", "C"].map((g) => (
+								<SelectItem key={g} value={JSON.stringify([g])}>
+									{g}
+								</SelectItem>
+							))}
+						</SelectContent>
+					</Select>
+					<Button
+						variant="ghost"
+						size="sm"
+						aria-label="Clear grade filter"
+						onClick={() =>
+							onFiltersChange?.({
+								boro: filters?.boro,
+								grade: [],
+								zipcode: filters?.zipcode,
+							})
+						}
+					>
+						<X className="w-4 h-4" />
+					</Button>
+				</div>
+
+				{/* Borough single select with clear button */}
+				<div className="flex items-center gap-1">
+					<Select
+						value={String(filters?.boro ?? "")}
+						onValueChange={(v) =>
+							onFiltersChange?.({
+								boro: v || undefined,
+								grade: filters?.grade,
+								zipcode: filters?.zipcode,
+							})
+						}
+					>
+						<SelectTrigger className="w-48">
+							<SelectValue placeholder="Filter borough" />
+						</SelectTrigger>
+						<SelectContent>
+							{[
+								"Manhattan",
+								"Bronx",
+								"Brooklyn",
+								"Queens",
+								"Staten Island",
+							].map((b) => (
+								<SelectItem key={b} value={b}>
+									{b}
+								</SelectItem>
+							))}
+						</SelectContent>
+					</Select>
+					<Button
+						variant="ghost"
+						size="sm"
+						aria-label="Clear borough filter"
+						onClick={() =>
+							onFiltersChange?.({
+								boro: undefined,
+								grade: filters?.grade,
+								zipcode: filters?.zipcode,
+							})
+						}
+					>
+						<X className="w-4 h-4" />
+					</Button>
+				</div>
+
+				{/* Zipcode free input with clear button */}
+				<div className="flex items-center gap-1">
+					{/* Controlled zipcode input that updates server filters */}
+					<ZipcodeControl filters={filters} onFiltersChange={onFiltersChange} />
+				</div>
+			</div>
 			<div className="overflow-x-auto rounded-lg border">
 				<div
 					ref={parentRef}
@@ -300,5 +384,63 @@ function GoToPageInput({
 			}}
 			className="w-16"
 		/>
+	);
+}
+
+function ZipcodeControl({
+	filters,
+	onFiltersChange,
+}: {
+	filters?: { boro?: string; grade?: string[]; zipcode?: string };
+	onFiltersChange?: (filters: {
+		boro?: string;
+		grade?: string[];
+		zipcode?: string | undefined;
+	}) => void;
+}) {
+	const current = filters?.zipcode ?? "";
+	const [value, setValue] = React.useState<string>(current ?? "");
+
+	React.useEffect(() => {
+		setValue(current ?? "");
+	}, [current]);
+
+	const apply = (val: string) => {
+		const trimmed = val.trim();
+		onFiltersChange?.({
+			boro: filters?.boro,
+			grade: filters?.grade,
+			zipcode: trimmed || undefined,
+		});
+	};
+
+	return (
+		<div className="flex items-center gap-1">
+			<Input
+				placeholder="Zipcode"
+				className="w-32"
+				value={value}
+				onChange={(e) => setValue(e.target.value)}
+				onBlur={(e) => apply(e.target.value)}
+				onKeyDown={(e) => {
+					if (e.key === "Enter") apply((e.target as HTMLInputElement).value);
+				}}
+			/>
+			<Button
+				variant="ghost"
+				size="sm"
+				aria-label="Clear zipcode filter"
+				onClick={() => {
+					setValue("");
+					onFiltersChange?.({
+						boro: filters?.boro,
+						grade: filters?.grade,
+						zipcode: undefined,
+					});
+				}}
+			>
+				<X className="w-4 h-4" />
+			</Button>
+		</div>
 	);
 }

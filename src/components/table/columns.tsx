@@ -55,7 +55,8 @@ export const columns: ColumnDef<Restaurant>[] = [
 		),
 	},
 	{
-		accessorKey: "grade",
+		id: "grade",
+		accessorKey: undefined,
 		header: ({ column }) => {
 			const gradeExplanations = {
 				A: "Grade A",

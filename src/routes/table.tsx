@@ -16,16 +16,14 @@ import { restaurantSearchParamsSchema } from "@/schema/schema";
 import type { Restaurant } from "@/types/restaurant";
 import { restaurantQueries } from "@/utils/restaurant";
 import seo from "@/utils/seo";
-import { rankItem } from "@tanstack/match-sorter-utils";
 import { useSuspenseInfiniteQuery } from "@tanstack/react-query";
 import {
 	ErrorComponent,
 	type ErrorComponentProps,
 	createFileRoute,
 } from "@tanstack/react-router";
-import type { FilterFn } from "@tanstack/react-table";
 import { AlertCircleIcon } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 const SITE_URL = process.env.SITE_URL ?? "";
 
@@ -35,7 +33,6 @@ export const Route = createFileRoute("/table")({
 	loader: async ({ context, deps }) => {
 		const query = restaurantQueries.infiniteList({ ...deps.params.search });
 
-		// Prefetch the restaurant list data on the server
 		await context.queryClient.ensureInfiniteQueryData({
 			...query,
 		});
@@ -58,18 +55,50 @@ export const Route = createFileRoute("/table")({
 	component: TableRoute,
 });
 
-const fuzzyFilter: FilterFn<Restaurant> = (row, columnId, value, addMeta) => {
-	const itemRank = rankItem(row.getValue(columnId), value);
-	addMeta({ itemRank });
-	return itemRank.passed;
-};
-
 function TableRoute() {
 	const searchParams = Route.useSearch();
+	const navigate = Route.useNavigate();
 
-	const [globalFilter, setGlobalFilter] = useState(searchParams?.$q || "");
+	// Local query state mirrors the route $q value but we debounce updates
+	const [query, setQuery] = useState(searchParams?.$q || "");
+	// Local filter state mirrors route search params so we can control DataTable
+	const [boro, setBoro] = useState<string | undefined>(
+		searchParams?.boro ?? undefined,
+	);
+	const [grade, setGrade] = useState<string | undefined>(
+		searchParams?.grade ?? undefined,
+	);
+	const [zipcode, setZipcode] = useState<string | undefined>(
+		searchParams?.zipcode ? String(searchParams.zipcode) : undefined,
+	);
 
-	const { data, isLoading, isError, isFetching } = useSuspenseInfiniteQuery(
+	// Debounce navigation: when query changes, update route search after a delay
+	useEffect(() => {
+		const handler = setTimeout(() => {
+			// set $q to undefined when empty to avoid adding empty param
+			navigate({
+				search: (prev) => ({ ...(prev || {}), $q: query || undefined }),
+			});
+		}, 350);
+		return () => clearTimeout(handler);
+	}, [query, navigate]);
+
+	// Sync boro/grade/zipcode to the URL (debounced)
+	useEffect(() => {
+		const handler = setTimeout(() => {
+			navigate({
+				search: (prev) => ({
+					...(prev || {}),
+					boro: boro || undefined,
+					grade: grade || undefined,
+					zipcode: zipcode ? Number(zipcode) : undefined,
+				}),
+			});
+		}, 350);
+		return () => clearTimeout(handler);
+	}, [boro, grade, zipcode, navigate]);
+
+	const { data, isLoading, isError } = useSuspenseInfiniteQuery(
 		restaurantQueries.infiniteList(searchParams),
 	);
 
@@ -88,9 +117,9 @@ function TableRoute() {
 				Initial response times may be slow due to API restraints.
 			</DismissibleAlert>
 			<Input
-				value={globalFilter ?? ""}
-				onChange={(e) => setGlobalFilter(e.target.value)}
-				placeholder="Search all columns..."
+				value={query ?? ""}
+				onChange={(e) => setQuery(e.target.value)}
+				placeholder="Search (server-side) — restaurants, zipcode, borough..."
 				type="text"
 				className="w-full"
 			/>
@@ -98,11 +127,13 @@ function TableRoute() {
 			<DataTable
 				columns={columns}
 				data={restaurants}
-				isFetching={isFetching}
-				globalFilter={globalFilter}
-				onGlobalFilterChange={setGlobalFilter}
-				fuzzyFilter={fuzzyFilter}
 				totalCount={totalCount}
+				filters={{ boro, grade: grade ? grade.split(",") : undefined, zipcode }}
+				onFiltersChange={(next) => {
+					setBoro(next.boro ?? undefined);
+					setGrade(next.grade ? next.grade.join(",") : undefined);
+					setZipcode(next.zipcode ?? undefined);
+				}}
 			/>
 		</div>
 	);
@@ -121,9 +152,6 @@ function TableErrorComponent({ error }: ErrorComponentProps) {
 						or check your connection. If the problem persists, contact support.
 					</AlertDescription>
 					<div className="mt-3 flex flex-col items-center gap-2">
-						{/* <Button type="button" size="sm" onClick={() => refetch()}>
-							Retry
-						</Button> */}
 						<Accordion
 							className="text-xs text-muted-foreground"
 							type="single"

@@ -23,6 +23,7 @@ import {
 	type ErrorComponentProps,
 	createFileRoute,
 } from "@tanstack/react-router";
+import { XCircleIcon } from "lucide-react";
 import React from "react";
 
 const SITE_URL = process.env.SITE_URL ?? "";
@@ -195,7 +196,11 @@ function RouteComponent() {
 		<main className="container mx-auto p-4 sm:p-6 lg:p-8">
 			{remoteDown ? (
 				<div className="mb-6">
-					<DismissibleAlert title="Data temporarily unavailable">
+					<DismissibleAlert
+						title="Data temporarily unavailable"
+						isActuallyDismissable={false}
+						icon={<XCircleIcon className="w-6 h-6 text-destructive" />}
+					>
 						The restaurant data is temporarily unavailable. We're working on it
 						— try again later.
 					</DismissibleAlert>

@@ -22,7 +22,7 @@ import {
 	type ErrorComponentProps,
 	createFileRoute,
 } from "@tanstack/react-router";
-import { AlertCircleIcon } from "lucide-react";
+import { AlertCircleIcon, XCircleIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 
 const SITE_URL = process.env.SITE_URL ?? "";
@@ -120,7 +120,11 @@ function TableRoute() {
 	return (
 		<div className="min-h-screen p-6 space-y-2">
 			{remoteDown ? (
-				<DismissibleAlert title="Data temporarily unavailable">
+				<DismissibleAlert
+					title="Data temporarily unavailable"
+					isActuallyDismissable={false}
+					icon={<XCircleIcon className="size-5 text-destructive" />}
+				>
 					The restaurant data is temporarily unavailable. We're working on it —
 					try again later.
 				</DismissibleAlert>

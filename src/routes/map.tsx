@@ -22,6 +22,7 @@ import {
 	Link,
 	createFileRoute,
 } from "@tanstack/react-router";
+import { XCircleIcon } from "lucide-react";
 import { Loader2 } from "lucide-react";
 import React, { Suspense } from "react";
 
@@ -119,7 +120,11 @@ function MapPage() {
 				<MapFilters />
 				{remoteDown ? (
 					<div className="ml-4">
-						<DismissibleAlert title="Data temporarily unavailable">
+						<DismissibleAlert
+							title="Data temporarily unavailable"
+							isActuallyDismissable={false}
+							icon={<XCircleIcon className="size-5 text-destructive" />}
+						>
 							The restaurant data is temporarily unavailable. We're working on
 							it — you can still browse the map shell and try again later.
 						</DismissibleAlert>

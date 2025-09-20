@@ -26,7 +26,7 @@ import {
 	createFileRoute,
 } from "@tanstack/react-router";
 import { useLoaderData } from "@tanstack/react-router";
-import { MapIcon } from "lucide-react";
+import { MapIcon, XCircleIcon } from "lucide-react";
 
 const SITE_URL = process.env.SITE_URL ?? "";
 
@@ -105,7 +105,11 @@ function App() {
 		<main className="container max-w-5xl mx-auto py-12 px-4">
 			{loaderData?.remoteDown ? (
 				<div className="mb-6">
-					<DismissibleAlert title="Data temporarily unavailable">
+					<DismissibleAlert
+						title="Data temporarily unavailable"
+						isActuallyDismissable={false}
+						icon={<XCircleIcon className="size-5 text-destructive" />}
+					>
 						The restaurant data is temporarily unavailable. We're working on it
 						— try again later.
 					</DismissibleAlert>

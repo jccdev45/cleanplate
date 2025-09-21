@@ -22,6 +22,97 @@ import { createServerFn } from "@tanstack/react-start";
 
 const appToken = process.env.RESTAURANT_API_APP_TOKEN;
 
+// Server-side aggregator for cuisine trends. Returns { data, topCuisines }
+export const getCuisineTrendsFn = createServerFn({ method: "GET" })
+	.validator(
+		(val: unknown) =>
+			val as { topN?: number; minYear?: number; maxYear?: number } | undefined,
+	)
+	.handler(async ({ data }) => {
+		const BASE_URL = "https://data.cityofnewyork.us/resource/43nn-pn8j.json";
+		const params: Record<string, unknown> = {};
+		const topN = Number(data?.topN ?? 6);
+		const minYear = data?.minYear;
+		const maxYear = data?.maxYear;
+
+		// Use Socrata aggregation: extract year and group by cuisine + year
+		params.$select =
+			"date_extract_y(inspection_date) AS year, cuisine_description, COUNT(camis) AS cnt";
+		params.$group = "year, cuisine_description";
+		params.$order = "year ASC";
+		params.$limit = 50000;
+
+		if (minYear || maxYear) {
+			const conds: string[] = [];
+			if (minYear)
+				conds.push(`date_extract_y(inspection_date) >= ${Number(minYear)}`);
+			if (maxYear)
+				conds.push(`date_extract_y(inspection_date) <= ${Number(maxYear)}`);
+			params.$where = conds.join(" AND ");
+		}
+
+		const url = new URL(BASE_URL);
+		const entries: [string, string][] = [];
+		for (const [key, value] of Object.entries(params)) {
+			if (value === undefined || value === null) continue;
+			entries.push([key, String(value)]);
+		}
+		if (entries.length) url.search = new URLSearchParams(entries).toString();
+
+		const response = await retryFetch(url.toString(), {
+			headers: {
+				Accept: "application/json",
+				...(appToken ? { "X-App-Token": appToken } : {}),
+			},
+		});
+
+		if (!response.ok) {
+			const text = await response.text();
+			const snippet = sanitizeSnippet(text, 1000);
+			void sendPosthogEvent("socrata_error", {
+				url: url.toString(),
+				status: response.status,
+				statusText: response.statusText,
+				snippet,
+			});
+			throw new Error(
+				`Socrata aggregation request failed: ${response.status} ${response.statusText}`,
+			);
+		}
+
+		const result = await response.json();
+		if (!Array.isArray(result)) return { data: [], topCuisines: [] };
+
+		const totals: Record<string, number> = {};
+		const byYearCuisine: Record<string, Record<string, number>> = {};
+		const rows = result as Array<Record<string, unknown>>;
+		for (const row of rows) {
+			const year = String(row.year ?? "");
+			const cuisine = String(row.cuisine_description ?? "Unknown");
+			const cnt = Number((row.cnt ?? row.count ?? 0) as unknown);
+			if (!/^[0-9]{4}$/.test(year)) continue;
+			byYearCuisine[year] ??= {};
+			byYearCuisine[year][cuisine] = (byYearCuisine[year][cuisine] ?? 0) + cnt;
+			totals[cuisine] = (totals[cuisine] ?? 0) + cnt;
+		}
+
+		const topCuisines = Object.entries(totals)
+			.sort((a, b) => b[1] - a[1])
+			.slice(0, topN)
+			.map((e) => e[0]);
+
+		const years = Object.keys(byYearCuisine).sort();
+		const dataOut = years.map((y) => {
+			const row: Record<string, string | number> = { year: y };
+			for (const cuisine of topCuisines) {
+				row[cuisine] = byYearCuisine[y][cuisine] ?? 0;
+			}
+			return row;
+		});
+
+		return { data: dataOut, topCuisines };
+	});
+
 export const getRestaurantsFn = createServerFn({ method: "GET" })
 	// Accept strong params via Zod. This allows map-specific params to exist in the URL
 	.validator((val) => restaurantSearchParamsSchema.parse(val))
@@ -373,6 +464,21 @@ export const restaurantQueries = {
 				getRestaurantsFn({
 					data: { markerOnly: true, $limit: opts?.$limit ?? 10000 },
 				}),
+			staleTime: HOUR_IN_MS,
+			gcTime: HOUR_IN_MS * 2,
+			refetchOnWindowFocus: false,
+		});
+	},
+
+	// Aggregated trends (server-side) - returns { data, topCuisines }
+	trendsAggregate: (opts?: {
+		topN?: number;
+		minYear?: number;
+		maxYear?: number;
+	}) => {
+		return queryOptions({
+			queryKey: ["charts", "trendsAggregate", opts],
+			queryFn: () => getCuisineTrendsFn({ data: opts ?? {} }),
 			staleTime: HOUR_IN_MS,
 			gcTime: HOUR_IN_MS * 2,
 			refetchOnWindowFocus: false,

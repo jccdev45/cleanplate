@@ -2,10 +2,7 @@ import { CuisineTrendsAreaChart } from "@/components/charts/cuisine-trends-area-
 import { DefaultLoader } from "@/components/default-loader";
 import { GenericErrorComponent } from "@/components/generic-error";
 import { SITE_NAME } from "@/lib/constants";
-import {
-	aggregateCuisineTrends,
-	safeExtractRestaurants,
-} from "@/utils/aggregate-inspections";
+// server-side aggregation is used; local aggregation helpers are no longer required here
 import { restaurantQueries } from "@/utils/restaurant";
 import seo from "@/utils/seo";
 import { useSuspenseQuery } from "@tanstack/react-query";
@@ -15,8 +12,9 @@ const SITE_URL = process.env.SITE_URL ?? "";
 
 export const Route = createFileRoute("/chart/trends")({
 	loader: async ({ context }) => {
+		// Prefetch the aggregated trends to avoid fetching the full restaurants list
 		await context.queryClient.ensureQueryData(
-			restaurantQueries.list({ $limit: 10000 }),
+			restaurantQueries.trendsAggregate({ topN: 6 }),
 		);
 	},
 	head: () => ({
@@ -34,14 +32,18 @@ export const Route = createFileRoute("/chart/trends")({
 });
 
 function TrendsRoute() {
-	const { data: raw } = useSuspenseQuery(
-		restaurantQueries.list({ $limit: 10000 }),
+	const { data: serverAgg } = useSuspenseQuery(
+		restaurantQueries.trendsAggregate({ topN: 6 }),
 	);
 
-	if (!raw) return <DefaultLoader text="Loading trends..." />;
+	if (!serverAgg) return <DefaultLoader text="Loading trends..." />;
 
-	const restaurants = safeExtractRestaurants(raw);
-	const { data, topCuisines } = aggregateCuisineTrends(restaurants, 6);
+	// serverAgg has shape { data, topCuisines }
+	const { data: rawData, topCuisines } = serverAgg as unknown as {
+		data: Array<Record<string, string | number>>;
+		topCuisines: string[];
+	};
+	const data = rawData;
 
 	return (
 		<main className="p-6">

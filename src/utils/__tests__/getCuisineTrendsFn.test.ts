@@ -3,6 +3,11 @@ import { describe, expect, it, vi } from "vitest";
 // Mock retryFetch to return a Response-like object
 vi.mock("@/lib/fetch-utils", () => {
 	return {
+		parseNum: (v: unknown) => {
+			if (v === undefined || v === null) return undefined;
+			const n = Number(String(v));
+			return Number.isFinite(n) ? n : undefined;
+		},
 		retryFetch: vi.fn(async () => {
 			return {
 				ok: true,

@@ -300,4 +300,82 @@ export const restaurantQueries = {
 			refetchOnWindowFocus: false,
 		});
 	},
+
+	// Focused chart queries. These are designed to fetch minimal fields where possible
+	cuisineCounts: (opts?: { $limit?: number }) => {
+		return queryOptions({
+			queryKey: ["charts", "cuisineCounts", opts],
+			queryFn: () =>
+				getRestaurantsFn({
+					data: { markerOnly: true, $limit: opts?.$limit ?? 10000 },
+				}),
+			staleTime: HOUR_IN_MS,
+			gcTime: HOUR_IN_MS * 2,
+			refetchOnWindowFocus: false,
+		});
+	},
+
+	trendsList: (opts?: { $limit?: number }) => {
+		// Returns the raw grouped restaurants payload; aggregation is expected client-side
+		return queryOptions({
+			queryKey: ["charts", "trendsList", opts],
+			queryFn: () =>
+				getRestaurantsFn({ data: { $limit: opts?.$limit ?? 10000 } }),
+			staleTime: HOUR_IN_MS,
+			gcTime: HOUR_IN_MS * 2,
+			refetchOnWindowFocus: false,
+		});
+	},
+
+	boroughCounts: (opts?: { $limit?: number }) => {
+		return queryOptions({
+			queryKey: ["charts", "boroughCounts", opts],
+			queryFn: () =>
+				getRestaurantsFn({
+					data: { markerOnly: true, $limit: opts?.$limit ?? 10000 },
+				}),
+			staleTime: HOUR_IN_MS,
+			gcTime: HOUR_IN_MS * 2,
+			refetchOnWindowFocus: false,
+		});
+	},
+
+	gradeDistribution: (opts?: { $limit?: number }) => {
+		return queryOptions({
+			queryKey: ["charts", "gradeDistribution", opts],
+			queryFn: () =>
+				getRestaurantsFn({
+					data: { markerOnly: true, $limit: opts?.$limit ?? 10000 },
+				}),
+			staleTime: HOUR_IN_MS,
+			gcTime: HOUR_IN_MS * 2,
+			refetchOnWindowFocus: false,
+		});
+	},
+
+	criticalFlagDistribution: (opts?: { $limit?: number }) => {
+		return queryOptions({
+			queryKey: ["charts", "criticalFlagDistribution", opts],
+			queryFn: () =>
+				getRestaurantsFn({
+					data: { markerOnly: true, $limit: opts?.$limit ?? 10000 },
+				}),
+			staleTime: HOUR_IN_MS,
+			gcTime: HOUR_IN_MS * 2,
+			refetchOnWindowFocus: false,
+		});
+	},
+
+	scoreHistogram: (opts?: { $limit?: number }) => {
+		return queryOptions({
+			queryKey: ["charts", "scoreHistogram", opts],
+			queryFn: () =>
+				getRestaurantsFn({
+					data: { markerOnly: true, $limit: opts?.$limit ?? 10000 },
+				}),
+			staleTime: HOUR_IN_MS,
+			gcTime: HOUR_IN_MS * 2,
+			refetchOnWindowFocus: false,
+		});
+	},
 };

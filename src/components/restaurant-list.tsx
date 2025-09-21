@@ -27,9 +27,12 @@ export function RestaurantList({
 
 			{remoteDown ? (
 				<div className="mb-4">
-					<DismissibleAlert title="Data temporarily unavailable">
-						The restaurant data is temporarily unavailable. Some lists may be
-						empty while we perform maintenance.
+					<DismissibleAlert
+						title="Data temporarily unavailable"
+						isActuallyDismissable={false}
+					>
+						The restaurant data is temporarily unavailable. Please try again
+						later.
 					</DismissibleAlert>
 				</div>
 			) : (

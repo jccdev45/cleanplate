@@ -2,6 +2,7 @@
 
 import { DefaultLoader } from "@/components/default-loader";
 import { DismissibleAlert } from "@/components/dismissible-alert";
+import { GenericErrorComponent } from "@/components/generic-error";
 import { MapFilters } from "@/components/map/map-filters";
 import { RestaurantMap } from "@/components/map/restaurant-map";
 import { Badge } from "@/components/ui/badge";
@@ -17,9 +18,7 @@ import { restaurantQueries } from "@/utils/restaurant";
 import seo from "@/utils/seo";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import {
-	ErrorComponent,
 	type ErrorComponentProps,
-	Link,
 	createFileRoute,
 } from "@tanstack/react-router";
 import { XCircleIcon } from "lucide-react";
@@ -63,7 +62,9 @@ export const Route = createFileRoute("/map")({
 		],
 	}),
 
-	errorComponent: MapErrorComponent,
+	errorComponent: (props: ErrorComponentProps) => (
+		<GenericErrorComponent {...props} title="map" />
+	),
 	component: MapPage,
 });
 
@@ -240,21 +241,4 @@ function MapPage() {
 	}
 }
 
-function MapErrorComponent({ error }: ErrorComponentProps) {
-	const isDev = Boolean(import.meta.env?.DEV);
-
-	return (
-		<div className="min-h-screen p-6 space-y-4">
-			{isDev ? <ErrorComponent error={error} /> : null}
-			<div className="mt-3 flex flex-col items-center gap-2">
-				<p className="text-muted-foreground">
-					We had trouble loading the map. You can try again or check your
-					connection. If the problem persists, contact support.
-				</p>
-				<Button asChild variant="link">
-					<Link to="/map">Try Again</Link>
-				</Button>
-			</div>
-		</div>
-	);
-}
+// MapErrorComponent removed — use shared GenericErrorComponent via route config

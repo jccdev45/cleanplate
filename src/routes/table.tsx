@@ -1,15 +1,8 @@
 import { DefaultLoader } from "@/components/default-loader";
 import { DismissibleAlert } from "@/components/dismissible-alert";
+import { GenericErrorComponent } from "@/components/generic-error";
 import { columns } from "@/components/table/columns";
 import { DataTable } from "@/components/table/data-table";
-import {
-	Accordion,
-	AccordionContent,
-	AccordionItem,
-	AccordionTrigger,
-} from "@/components/ui/accordion";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SITE_NAME } from "@/lib/constants";
 import { restaurantSearchParamsSchema } from "@/schema/schema";
@@ -18,11 +11,10 @@ import { restaurantQueries } from "@/utils/restaurant";
 import seo from "@/utils/seo";
 import { useSuspenseInfiniteQuery } from "@tanstack/react-query";
 import {
-	ErrorComponent,
 	type ErrorComponentProps,
 	createFileRoute,
 } from "@tanstack/react-router";
-import { AlertCircleIcon, XCircleIcon } from "lucide-react";
+import { XCircleIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 
 const SITE_URL = process.env.SITE_URL ?? "";
@@ -56,7 +48,9 @@ export const Route = createFileRoute("/table")({
 			...(SITE_URL ? [{ rel: "canonical", href: `${SITE_URL}/table` }] : []),
 		],
 	}),
-	errorComponent: TableErrorComponent,
+	errorComponent: (props: ErrorComponentProps) => (
+		<GenericErrorComponent {...props} title="table" />
+	),
 	component: TableRoute,
 });
 
@@ -155,46 +149,4 @@ function TableRoute() {
 	);
 }
 
-function TableErrorComponent({ error }: ErrorComponentProps) {
-	const isDev = Boolean(import.meta.env?.DEV);
-
-	return (
-		<div className="min-h-screen p-6 space-y-4">
-			{isDev ? <ErrorComponent error={error} /> : null}
-			<Alert variant="destructive">
-				<AlertCircleIcon />
-				<div className="flex flex-col">
-					<AlertTitle>Unable to load table</AlertTitle>
-					<AlertDescription>
-						We had trouble loading restaurant inspection data. You can try again
-						or check your connection. If the problem persists, contact support.
-					</AlertDescription>
-					{isDev ? (
-						<div className="mt-3 flex flex-col items-center gap-2">
-							<Accordion
-								className="text-xs text-muted-foreground"
-								type="single"
-								collapsible
-							>
-								<AccordionItem value="technical-details">
-									<Button variant="outline" asChild>
-										<AccordionTrigger className="cursor-pointer">
-											Technical Details
-										</AccordionTrigger>
-									</Button>
-									<AccordionContent>
-										<pre className="whitespace-pre-wrap mt-2 text-[12px]">
-											{error instanceof Error
-												? error.message
-												: JSON.stringify(error, null, 2)}
-										</pre>
-									</AccordionContent>
-								</AccordionItem>
-							</Accordion>
-						</div>
-					) : null}
-				</div>
-			</Alert>
-		</div>
-	);
-}
+// TableErrorComponent removed — route uses shared GenericErrorComponent

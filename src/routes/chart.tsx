@@ -6,6 +6,7 @@ import { GradePieChart } from "@/components/charts/grade-pie-chart";
 import { ScoreBarChart } from "@/components/charts/score-bar-chart";
 import { DefaultLoader } from "@/components/default-loader";
 import { DismissibleAlert } from "@/components/dismissible-alert";
+import { GenericErrorComponent } from "@/components/generic-error";
 import {
 	Card,
 	CardContent,
@@ -19,7 +20,6 @@ import { restaurantQueries } from "@/utils/restaurant";
 import seo from "@/utils/seo";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import {
-	ErrorComponent,
 	type ErrorComponentProps,
 	createFileRoute,
 } from "@tanstack/react-router";
@@ -34,14 +34,14 @@ export const Route = createFileRoute("/chart")({
 		// Prefetch the restaurant list data on the server. If the API is down
 		// (planned maintenance), swallow the error so the route can still render
 		// the page shell and show a friendly message.
-		try {
-			await context.queryClient.ensureQueryData(
-				restaurantQueries.list({ $limit }),
-			);
-		} catch (err) {
-			console.error("Prefetch failed for /chart loader", err);
-			return { remoteDown: true };
-		}
+		// try {
+		await context.queryClient.ensureQueryData(
+			restaurantQueries.list({ $limit }),
+		);
+		// } catch (err) {
+		// 	console.error("Prefetch failed for /chart loader", err);
+		// 	return { remoteDown: true };
+		// }
 	},
 	head: () => ({
 		meta: seo({
@@ -58,7 +58,9 @@ export const Route = createFileRoute("/chart")({
 		],
 	}),
 
-	errorComponent: ChartErrorComponent,
+	errorComponent: (props: ErrorComponentProps) => (
+		<GenericErrorComponent {...props} title="charts" />
+	),
 	component: RouteComponent,
 });
 
@@ -201,8 +203,8 @@ function RouteComponent() {
 						isActuallyDismissable={false}
 						icon={<XCircleIcon className="w-6 h-6 text-destructive" />}
 					>
-						The restaurant data is temporarily unavailable. We're working on it
-						— try again later.
+						The restaurant data is temporarily unavailable. Please try again
+						later.
 					</DismissibleAlert>
 				</div>
 			) : null}
@@ -296,21 +298,5 @@ function RouteComponent() {
 				</Tabs>
 			</section>
 		</main>
-	);
-}
-
-function ChartErrorComponent({ error }: ErrorComponentProps) {
-	const isDev = Boolean(import.meta.env?.DEV);
-
-	return (
-		<div className="min-h-screen p-6 space-y-4">
-			{isDev ? <ErrorComponent error={error} /> : null}
-			<div className="mt-3 flex flex-col items-center gap-2">
-				<p className="text-muted-foreground">
-					We had trouble loading the chart data. You can try again or check your
-					connection. If the problem persists, contact support.
-				</p>
-			</div>
-		</div>
 	);
 }

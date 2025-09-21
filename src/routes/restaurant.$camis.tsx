@@ -1,3 +1,4 @@
+import { GenericErrorComponent } from "@/components/generic-error";
 import { InspectionCard } from "@/components/restaurant/inspection-card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -40,6 +41,9 @@ export const Route = createFileRoute("/restaurant/$camis")({
 	loader: ({ context: { queryClient }, params: { camis } }) => {
 		return queryClient.ensureQueryData(restaurantQueries.detail(camis));
 	},
+	errorComponent: (props) => (
+		<GenericErrorComponent {...props} title="restaurant" />
+	),
 	head: ({ loaderData, params }) => {
 		const d = loaderData?.restaurants?.[0];
 		const title = d ? `${d.dba} | ${SITE_NAME}` : `Restaurant | ${SITE_NAME}`;

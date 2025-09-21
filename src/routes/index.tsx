@@ -1,4 +1,5 @@
 import { DismissibleAlert } from "@/components/dismissible-alert";
+import { GenericErrorComponent } from "@/components/generic-error";
 import {
 	Hero,
 	HeroCTA,
@@ -21,7 +22,6 @@ import { FEATURE_ITEMS } from "@/lib/constants";
 import { restaurantQueries } from "@/utils/restaurant";
 import seo from "@/utils/seo";
 import {
-	ErrorComponent,
 	type ErrorComponentProps,
 	createFileRoute,
 } from "@tanstack/react-router";
@@ -74,27 +74,11 @@ export const Route = createFileRoute("/")({
 		links: [...(SITE_URL ? [{ rel: "canonical", href: `${SITE_URL}/` }] : [])],
 	}),
 
-	errorComponent: IndexErrorComponent,
+	errorComponent: (props: ErrorComponentProps) => (
+		<GenericErrorComponent {...props} title="home" />
+	),
 	component: App,
 });
-
-function IndexErrorComponent({ error }: ErrorComponentProps) {
-	const isDev = Boolean(import.meta.env?.DEV);
-
-	if (isDev) return <ErrorComponent error={error} />;
-
-	return (
-		<main className="container max-w-3xl mx-auto py-12 px-4">
-			<div className="text-center">
-				<h1 className="text-2xl font-bold mb-4">Something went wrong</h1>
-				<p className="text-muted-foreground">
-					We had trouble loading the page. You can try again or check your
-					connection. If the problem persists, contact support.
-				</p>
-			</div>
-		</main>
-	);
-}
 
 function App() {
 	const loaderData = useLoaderData({ from: "/" }) as
@@ -110,8 +94,8 @@ function App() {
 						isActuallyDismissable={false}
 						icon={<XCircleIcon className="size-5 text-destructive" />}
 					>
-						The restaurant data is temporarily unavailable. We're working on it
-						— try again later.
+						The restaurant data is temporarily unavailable. Please try again
+						later.
 					</DismissibleAlert>
 				</div>
 			) : null}
@@ -150,7 +134,6 @@ function App() {
 							key={it.title}
 							className="p-6 flex flex-col items-center text-center shadow-md animate-in fade-in duration-700"
 						>
-							{/* Icon component passed in constant */}
 							<it.icon className="size-12 text-accent" />
 							<h3 className="text-xl font-bold">{it.title}</h3>
 							<p className="text-muted-foreground">{it.description}</p>

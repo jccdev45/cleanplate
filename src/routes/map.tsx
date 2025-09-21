@@ -8,13 +8,13 @@ import { RestaurantMap } from "@/components/map/restaurant-map";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { SITE_NAME } from "@/lib/constants";
+import { restaurantQueries } from "@/queries/restaurant";
 import {
 	GRADES,
 	type RestaurantSearchParams,
 	restaurantSearchParamsSchema,
 } from "@/schema/schema";
 import { normalizeParams } from "@/utils/normalize-params";
-import { restaurantQueries } from "@/utils/restaurant";
 import seo from "@/utils/seo";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import {

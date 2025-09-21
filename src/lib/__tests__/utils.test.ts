@@ -1,5 +1,5 @@
-import { groupRestaurants } from "@/lib/utils";
 import type { RestaurantRaw } from "@/schema/schema";
+import { groupRestaurants } from "@/utils/restaurant-grouping";
 import { describe, expect, it } from "vitest";
 
 describe("groupRestaurants", () => {

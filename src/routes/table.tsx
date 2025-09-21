@@ -5,9 +5,9 @@ import { columns } from "@/components/table/columns";
 import { DataTable } from "@/components/table/data-table";
 import { Input } from "@/components/ui/input";
 import { SITE_NAME } from "@/lib/constants";
+import { restaurantQueries } from "@/queries/restaurant";
 import { restaurantSearchParamsSchema } from "@/schema/schema";
 import type { Restaurant } from "@/types/restaurant";
-import { restaurantQueries } from "@/utils/restaurant";
 import seo from "@/utils/seo";
 import { useSuspenseInfiniteQuery } from "@tanstack/react-query";
 import {

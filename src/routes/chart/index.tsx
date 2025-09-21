@@ -1,6 +1,6 @@
 import { DefaultLoader } from "@/components/default-loader";
 import StatsStrip from "@/components/stats-strip";
-import { restaurantQueries } from "@/utils/restaurant";
+import { restaurantQueries } from "@/queries/restaurant";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { ChartLayout } from "./_layout";

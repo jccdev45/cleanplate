@@ -19,7 +19,7 @@ import {
 	TESTIMONIALS,
 } from "@/lib/constants";
 import { FEATURE_ITEMS } from "@/lib/constants";
-import { restaurantQueries } from "@/utils/restaurant";
+import { restaurantQueries } from "@/queries/restaurant";
 import seo from "@/utils/seo";
 import {
 	type ErrorComponentProps,

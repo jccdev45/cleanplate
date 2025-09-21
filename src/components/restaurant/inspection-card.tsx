@@ -69,6 +69,7 @@ export function InspectionCard({
 						</div>
 					)}
 
+					{/* TODO: Modify so that only violations > 5 will show in a Collapsible */}
 					{insp.violations && insp.violations.length > 0 && (
 						<div>
 							<span className="font-medium">Violations:</span>

@@ -3,7 +3,7 @@ import { DefaultLoader } from "@/components/default-loader";
 import { GenericErrorComponent } from "@/components/generic-error";
 import { SITE_NAME } from "@/lib/constants";
 // server-side aggregation is used; local aggregation helpers are no longer required here
-import { restaurantQueries } from "@/utils/restaurant";
+import { restaurantQueries } from "@/queries/restaurant";
 import seo from "@/utils/seo";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";

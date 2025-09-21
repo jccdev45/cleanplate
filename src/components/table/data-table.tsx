@@ -168,7 +168,11 @@ export function DataTable<TData, TValue>({
 				{/* Zipcode free input with clear button */}
 				<div className="flex items-center gap-1">
 					{/* Controlled zipcode input that updates server filters */}
-					<ZipcodeControl filters={filters} onFiltersChange={onFiltersChange} />
+					<ZipcodeControl
+						key={filters?.zipcode ?? ""}
+						filters={filters}
+						onFiltersChange={onFiltersChange}
+					/>
 				</div>
 			</div>
 			<div className="overflow-x-auto rounded-lg border">
@@ -314,6 +318,7 @@ export function DataTable<TData, TValue>({
 				<span className="flex items-center gap-1">
 					| Go to page:
 					<GoToPageInput
+						key={pagination.pageIndex}
 						pageIndex={pagination.pageIndex}
 						pageCount={table.getPageCount()}
 						onGo={(page) => table.setPageIndex(page)}
@@ -352,9 +357,6 @@ function GoToPageInput({
 	onGo,
 }: { pageIndex: number; pageCount: number; onGo: (page: number) => void }) {
 	const [inputValue, setInputValue] = React.useState(pageIndex + 1);
-	React.useEffect(() => {
-		setInputValue(pageIndex + 1);
-	}, [pageIndex]);
 
 	const handleSubmit = () => {
 		if (
@@ -400,10 +402,6 @@ function ZipcodeControl({
 }) {
 	const current = filters?.zipcode ?? "";
 	const [value, setValue] = React.useState<string>(current ?? "");
-
-	React.useEffect(() => {
-		setValue(current ?? "");
-	}, [current]);
 
 	const apply = (val: string) => {
 		const trimmed = val.trim();

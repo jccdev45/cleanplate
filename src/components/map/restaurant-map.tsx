@@ -6,7 +6,7 @@ import { Link, useNavigate, useSearch } from "@tanstack/react-router";
 import L from "leaflet";
 import { UtensilsCrossed } from "lucide-react";
 import { Loader2 } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
 	MapContainer,
 	Marker,
@@ -16,6 +16,7 @@ import {
 	useMapEvents,
 } from "react-leaflet";
 import MarkerClusterGroup from "react-leaflet-cluster";
+import { type DebouncedState, useDebounceCallback } from "usehooks-ts";
 
 function MapBoundsUpdater({
 	onBoundsChange,
@@ -30,7 +31,44 @@ function MapBoundsUpdater({
 		longitude: number;
 	}) => void;
 }) {
-	const debounceRef = useRef<number | null>(null);
+	const debouncedCall: DebouncedState<
+		(nb: {
+			minLat: number;
+			maxLat: number;
+			minLng: number;
+			maxLng: number;
+			zoom: number;
+			latitude: number;
+			longitude: number;
+		}) => void
+	> = useDebounceCallback(
+		(nb: {
+			minLat: number;
+			maxLat: number;
+			minLng: number;
+			maxLng: number;
+			zoom: number;
+			latitude: number;
+			longitude: number;
+		}) => {
+			try {
+				if (shouldSetBounds(nb)) onBoundsChange(nb);
+			} catch (err) {
+				// ignore
+			}
+		},
+		1000,
+	);
+
+	// Ensure any pending debounced calls are cancelled on unmount
+	useEffect(() => {
+		return () => {
+			try {
+				// Debounced state includes a cancel method
+				debouncedCall.cancel?.();
+			} catch {}
+		};
+	}, [debouncedCall]);
 	const currentSearch = useSearch({ from: "/map" });
 
 	// tolerant numeric equality for query params which may be strings
@@ -128,27 +166,24 @@ function MapBoundsUpdater({
 			}
 		},
 		moveend: (e) => {
-			if (debounceRef.current) window.clearTimeout(debounceRef.current);
-			// increase debounce slightly to avoid brief state flips while the user is still interacting
-			debounceRef.current = window.setTimeout(() => {
-				try {
-					const b = (e.target as L.Map).getBounds();
-					const z = (e.target as L.Map).getZoom();
-					const c = (e.target as L.Map).getCenter();
-					const nb = {
-						minLat: b.getSouth(),
-						maxLat: b.getNorth(),
-						minLng: b.getWest(),
-						maxLng: b.getEast(),
-						zoom: z,
-						latitude: c.lat,
-						longitude: c.lng,
-					};
-					if (shouldSetBounds(nb)) onBoundsChange(nb);
-				} catch (err) {
-					// ignore
-				}
-			}, 1000) as unknown as number;
+			try {
+				const b = (e.target as L.Map).getBounds();
+				const z = (e.target as L.Map).getZoom();
+				const c = (e.target as L.Map).getCenter();
+				const nb = {
+					minLat: b.getSouth(),
+					maxLat: b.getNorth(),
+					minLng: b.getWest(),
+					maxLng: b.getEast(),
+					zoom: z,
+					latitude: c.lat,
+					longitude: c.lng,
+				};
+				// call debounced handler
+				debouncedCall(nb);
+			} catch (err) {
+				// ignore
+			}
 		},
 	});
 

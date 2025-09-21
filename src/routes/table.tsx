@@ -15,7 +15,8 @@ import {
 	createFileRoute,
 } from "@tanstack/react-router";
 import { XCircleIcon } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useDebounceCallback } from "usehooks-ts";
 
 const SITE_URL = process.env.SITE_URL ?? "";
 
@@ -71,31 +72,28 @@ function TableRoute() {
 		searchParams?.zipcode ? String(searchParams.zipcode) : undefined,
 	);
 
-	// Debounce navigation: when query changes, update route search after a delay
-	useEffect(() => {
-		const handler = setTimeout(() => {
-			// set $q to undefined when empty to avoid adding empty param
-			navigate({
-				search: (prev) => ({ ...(prev || {}), $q: query || undefined }),
-			});
-		}, 350);
-		return () => clearTimeout(handler);
-	}, [query, navigate]);
+	// Debounced navigation helpers (use useDebounceFn so we can avoid effects)
+	const debouncedNavigateQuery = useDebounceCallback((q: string) => {
+		navigate({ search: (prev) => ({ ...(prev || {}), $q: q || undefined }) });
+	}, 350);
 
-	// Sync boro/grade/zipcode to the URL (debounced)
-	useEffect(() => {
-		const handler = setTimeout(() => {
+	const debouncedNavigateFilters = useDebounceCallback(
+		(next: {
+			boro?: string | undefined;
+			grade?: string | undefined;
+			zipcode?: string | undefined;
+		}) => {
 			navigate({
 				search: (prev) => ({
 					...(prev || {}),
-					boro: boro || undefined,
-					grade: grade || undefined,
-					zipcode: zipcode ? Number(zipcode) : undefined,
+					boro: next.boro || undefined,
+					grade: next.grade || undefined,
+					zipcode: next.zipcode ? Number(next.zipcode) : undefined,
 				}),
 			});
-		}, 350);
-		return () => clearTimeout(handler);
-	}, [boro, grade, zipcode, navigate]);
+		},
+		350,
+	);
 
 	const { data, isLoading, isError } = useSuspenseInfiniteQuery(
 		restaurantQueries.infiniteList(searchParams),
@@ -128,7 +126,11 @@ function TableRoute() {
 			</DismissibleAlert>
 			<Input
 				value={query ?? ""}
-				onChange={(e) => setQuery(e.target.value)}
+				onChange={(e) => {
+					const v = e.target.value;
+					setQuery(v);
+					debouncedNavigateQuery(v);
+				}}
 				placeholder="Search (server-side) — restaurants, zipcode, borough..."
 				type="text"
 				className="w-full"
@@ -140,9 +142,17 @@ function TableRoute() {
 				totalCount={totalCount}
 				filters={{ boro, grade: grade ? grade.split(",") : undefined, zipcode }}
 				onFiltersChange={(next) => {
-					setBoro(next.boro ?? undefined);
-					setGrade(next.grade ? next.grade.join(",") : undefined);
-					setZipcode(next.zipcode ?? undefined);
+					const nextBoro = next.boro ?? undefined;
+					const nextGrade = next.grade ? next.grade.join(",") : undefined;
+					const nextZip = next.zipcode ?? undefined;
+					setBoro(nextBoro);
+					setGrade(nextGrade);
+					setZipcode(nextZip);
+					debouncedNavigateFilters({
+						boro: nextBoro,
+						grade: nextGrade,
+						zipcode: nextZip,
+					});
 				}}
 			/>
 		</div>

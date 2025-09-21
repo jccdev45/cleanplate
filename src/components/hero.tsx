@@ -3,6 +3,7 @@ import { cn } from "@/lib/utils";
 import { Link } from "@tanstack/react-router";
 import { ArrowRight } from "lucide-react";
 import * as React from "react";
+import { useInterval } from "usehooks-ts";
 
 // Main Hero component (slot-based)
 function Hero({
@@ -44,25 +45,21 @@ function HeroMedia({
 	autoPlay?: boolean;
 } & React.HTMLAttributes<HTMLDivElement>) {
 	const [currentIndex, setCurrentIndex] = React.useState(0);
-	const rafRef = React.useRef<number | null>(null);
-	const lastTimeRef = React.useRef<number>(Date.now());
 
-	const step = React.useCallback(() => {
-		const now = Date.now();
-		if (now - lastTimeRef.current >= 7000) {
-			setCurrentIndex((prev) => (prev + 1) % images.length);
-			lastTimeRef.current = now;
-		}
-		rafRef.current = window.requestAnimationFrame(step);
+	// Advance the carousel every 7000ms when autoplay is enabled and there are
+	// at least two media items. useInterval accepts `null` to pause the timer.
+	const advance = React.useCallback(() => {
+		if (images.length === 0) return;
+		setCurrentIndex((prev) => (prev + 1) % images.length);
 	}, [images.length]);
 
-	React.useLayoutEffect(() => {
-		if (!autoPlay || images.length < 2) return;
-		rafRef.current = window.requestAnimationFrame(step);
-		return () => {
-			if (rafRef.current) window.cancelAnimationFrame(rafRef.current);
-		};
-	}, [autoPlay, images.length, step]);
+	useInterval(advance, autoPlay && images.length > 1 ? 7000 : null);
+
+	// If the images list shrinks such that the current index is out of range,
+	// clamp it to zero to avoid rendering an invalid slide.
+	React.useEffect(() => {
+		if (currentIndex >= images.length) setCurrentIndex(0);
+	}, [images.length, currentIndex]);
 
 	// Preload the primary image to help LCP. We only do this in browsers that support
 	// document.head and when there's at least one image. This is safe even if the image

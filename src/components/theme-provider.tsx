@@ -1,22 +1,14 @@
 import { setThemeServerFn } from "@/lib/theme";
 import { ScriptOnce, useRouter } from "@tanstack/react-router";
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useContext, useEffect, useMemo } from "react";
 import type { ReactNode } from "react";
+import { useLocalStorage, useMediaQuery } from "usehooks-ts";
 
 export type UserTheme = "light" | "dark" | "system";
 export type AppTheme = "light" | "dark";
 export type ServerTheme = "light" | "dark";
 
 const storageKey = "ui-theme";
-
-function getStoredUserTheme(): UserTheme {
-	try {
-		const v =
-			typeof window !== "undefined" ? localStorage.getItem(storageKey) : null;
-		if (v === "light" || v === "dark" || v === "system") return v;
-	} catch (_) {}
-	return "system";
-}
 
 function getSystemTheme(): AppTheme {
 	if (typeof window === "undefined") return "light";
@@ -64,46 +56,61 @@ type Props = { children?: ReactNode; theme?: ServerTheme };
 
 export function ThemeProvider({ children, theme: serverTheme }: Props) {
 	const router = useRouter();
-	const [userTheme, setUserTheme] = useState<UserTheme>(() =>
-		getStoredUserTheme(),
+
+	// Persist user choice in localStorage via usehooks-ts. Use initializeWithValue:false
+	// so SSR doesn't try to read localStorage during server render; default to 'system'.
+	const [userTheme, setUserTheme] = useLocalStorage<UserTheme>(
+		storageKey,
+		"system",
+		{ initializeWithValue: false },
 	);
 
+	// Media query hook to observe system preference changes.
+	const prefersDark = useMediaQuery("(prefers-color-scheme: dark)", {
+		defaultValue: false,
+		initializeWithValue: false,
+	});
+
+	const appTheme = useMemo<AppTheme>(() => {
+		return userTheme === "system"
+			? prefersDark
+				? "dark"
+				: "light"
+			: (userTheme as AppTheme);
+	}, [userTheme, prefersDark]);
+
+	// Apply theme classes to <html>. Keep this focused and minimal.
 	useEffect(() => {
-		if (userTheme === "system") {
-			const m = window.matchMedia("(prefers-color-scheme: dark)");
-			const handler = () => {
-				const sys = m.matches ? "dark" : "light";
+		try {
+			if (userTheme === "system") {
+				const sys = prefersDark ? "dark" : "light";
 				document.documentElement.classList.remove("light", "dark");
 				document.documentElement.classList.add(sys, "system");
-			};
-			m.addEventListener("change", handler);
-			return () => m.removeEventListener("change", handler);
+			} else {
+				document.documentElement.classList.remove("light", "dark", "system");
+				document.documentElement.classList.add(userTheme as string);
+			}
+		} catch (e) {
+			// ignore in non-browser environments
 		}
-		return;
-	}, [userTheme]);
-
-	const appTheme = useMemo<AppTheme>(
-		() => (userTheme === "system" ? getSystemTheme() : (userTheme as AppTheme)),
-		[userTheme],
-	);
+	}, [userTheme, prefersDark]);
 
 	async function setTheme(t: UserTheme) {
 		const validated =
 			t === "light" || t === "dark" || t === "system" ? t : "system";
+		// Persist via useLocalStorage setter
 		setUserTheme(validated);
+		// Also apply immediately to document for an instant visual response
 		try {
-			localStorage.setItem(storageKey, validated);
+			if (validated === "system") {
+				const sys = getSystemTheme();
+				document.documentElement.classList.remove("light", "dark");
+				document.documentElement.classList.add(sys, "system");
+			} else {
+				document.documentElement.classList.remove("light", "dark", "system");
+				document.documentElement.classList.add(validated);
+			}
 		} catch (_) {}
-
-		// apply immediately to document
-		if (validated === "system") {
-			const sys = getSystemTheme();
-			document.documentElement.classList.remove("light", "dark");
-			document.documentElement.classList.add(sys, "system");
-		} else {
-			document.documentElement.classList.remove("light", "dark", "system");
-			document.documentElement.classList.add(validated);
-		}
 
 		// persist on server (store cookie) and invalidate router so server-rendered
 		// values are in sync for subsequent navigations.

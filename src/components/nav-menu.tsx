@@ -1,5 +1,6 @@
 // TODO: Add search bar with result display dropdown
 
+import { useTheme } from "@/components/theme-provider";
 import { Button } from "@/components/ui/button";
 import {
 	Sheet,
@@ -21,7 +22,6 @@ import {
 	SheetIcon,
 	Sun,
 } from "lucide-react";
-import * as React from "react";
 import { LogoIcon } from "./logo";
 
 export function NavMenu() {
@@ -61,26 +61,8 @@ export function NavMenu() {
 		},
 	];
 
-	// Initialize from localStorage on the client so the initial React render
-	// matches the pre-hydration script that sets the same class on <html>.
-	const [isDark, setIsDark] = React.useState<boolean>(() => {
-		try {
-			return localStorage.getItem("theme") === "dark";
-		} catch {
-			return false;
-		}
-	});
-
-	// Persist changes to theme and update document class
-	React.useEffect(() => {
-		try {
-			localStorage.setItem("theme", isDark ? "dark" : "light");
-		} catch {}
-
-		if (typeof document !== "undefined") {
-			document.documentElement.classList.toggle("dark", isDark);
-		}
-	}, [isDark]);
+	// Use centralized ThemeProvider to read and set theme
+	const { userTheme, setTheme } = useTheme();
 
 	return (
 		<header className="p-2 bg-muted/50 text-muted-foreground">
@@ -111,7 +93,7 @@ export function NavMenu() {
 					<Button
 						aria-label="Toggle theme"
 						size="icon"
-						onClick={() => setIsDark((s) => !s)}
+						onClick={() => setTheme(userTheme === "dark" ? "light" : "dark")}
 						variant="outline"
 					>
 						{/* Render both icons so the server markup matches the client markup.

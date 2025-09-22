@@ -53,7 +53,7 @@ export function NavMenu() {
 		},
 		{
 			to: "/chart",
-			label: "Chart",
+			label: "Charts",
 			icon: ChartBarIcon,
 			className: "flex items-center gap-1",
 			activeClassName:

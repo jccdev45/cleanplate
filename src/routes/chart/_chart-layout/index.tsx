@@ -6,11 +6,11 @@ import { createFileRoute } from "@tanstack/react-router";
 
 const $limit = 10000;
 
-export const Route = createFileRoute("/chart/")({
+export const Route = createFileRoute("/chart/_chart-layout/")({
 	loader: async ({ context }) => {
 		await context.queryClient.ensureQueryData(
 			restaurantQueries.list({ $limit }),
-		);
+		)
 	},
 	component: RouteComponent,
 });
@@ -18,7 +18,7 @@ export const Route = createFileRoute("/chart/")({
 function RouteComponent() {
 	const { data, isLoading } = useSuspenseQuery(
 		restaurantQueries.list({ $limit }),
-	);
+	)
 	if (isLoading) return <DefaultLoader text="Loading chart data..." />;
 
 	const scores: number[] = [];
@@ -63,5 +63,5 @@ function RouteComponent() {
 				</p>
 			</section>
 		</section>
-	);
+	)
 }

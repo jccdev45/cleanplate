@@ -26,6 +26,7 @@ export function ChartSidebar() {
 					to={it.to}
 					className="flex items-center gap-2 px-3 py-2 rounded hover:bg-muted"
 					activeProps={{ className: "bg-muted/50 font-semibold" }}
+					activeOptions={{ exact: true }}
 				>
 					<it.icon className="size-4" />
 					<span className="hidden lg:inline">{it.label}</span>
@@ -34,5 +35,3 @@ export function ChartSidebar() {
 		</nav>
 	);
 }
-
-export default ChartSidebar;

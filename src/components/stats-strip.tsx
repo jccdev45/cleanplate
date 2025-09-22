@@ -1,5 +1,3 @@
-// TODO: Fix this
-
 import {
 	Card,
 	CardContent,
@@ -7,13 +5,15 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
-import type { FC } from "react";
-
-export const StatsStrip: FC<{
+export function StatsStrip({
+	avgScore = "N/A",
+	totalCuisines = 0,
+	percentageGradeA = "0.0",
+}: {
 	avgScore?: string | number | null;
 	totalCuisines?: number | null;
 	percentageGradeA?: string | number | null;
-}> = ({ avgScore = "N/A", totalCuisines = 0, percentageGradeA = "0.0" }) => {
+}) {
 	return (
 		<div className="flex gap-4 items-center justify-center mb-6 flex-wrap">
 			<Card className="w-40">
@@ -53,6 +53,4 @@ export const StatsStrip: FC<{
 			</Card>
 		</div>
 	);
-};
-
-export default StatsStrip;
+}

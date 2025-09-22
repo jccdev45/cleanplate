@@ -1,5 +1,5 @@
 import { DefaultLoader } from "@/components/default-loader";
-import StatsStrip from "@/components/stats-strip";
+import { StatsStrip } from "@/components/stats-strip";
 import { restaurantQueries } from "@/queries/restaurant";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
@@ -10,7 +10,7 @@ export const Route = createFileRoute("/chart/_chart-layout/")({
 	loader: async ({ context }) => {
 		await context.queryClient.ensureQueryData(
 			restaurantQueries.list({ $limit }),
-		)
+		);
 	},
 	component: RouteComponent,
 });
@@ -18,7 +18,7 @@ export const Route = createFileRoute("/chart/_chart-layout/")({
 function RouteComponent() {
 	const { data, isLoading } = useSuspenseQuery(
 		restaurantQueries.list({ $limit }),
-	)
+	);
 	if (isLoading) return <DefaultLoader text="Loading chart data..." />;
 
 	const scores: number[] = [];
@@ -63,5 +63,5 @@ function RouteComponent() {
 				</p>
 			</section>
 		</section>
-	)
+	);
 }

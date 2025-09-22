@@ -1,6 +1,12 @@
-import { ChartSidebar } from "@/components/chart-sidebar";
+import { ChartSidebar } from "@/components/charts/chart-sidebar";
 import GenericErrorComponent from "@/components/generic-error";
+import {
+	SidebarInset,
+	SidebarProvider,
+	SidebarTrigger,
+} from "@/components/ui/sidebar";
 import { SITE_NAME } from "@/lib/constants";
+import getSidebarStateServerFn from "@/lib/sidebar";
 import seo from "@/utils/seo";
 import {
 	type ErrorComponentProps,
@@ -13,6 +19,12 @@ const SITE_URL = process.env.SITE_URL ?? "";
 // Make this file the pathless layout for the `/chart` route so it wraps
 // the `index` and child routes under `/chart/*` via the Outlet.
 export const Route = createFileRoute("/chart/_chart-layout")({
+	loader: async () => {
+		// read the sidebar cookie on the server and return it so the layout
+		// can use it as defaultOpen to avoid client-only effects.
+		const val = await getSidebarStateServerFn();
+		return { defaultOpen: val };
+	},
 	head: () => ({
 		meta: seo({
 			title: `Charts | ${SITE_NAME}`,
@@ -36,16 +48,24 @@ export const Route = createFileRoute("/chart/_chart-layout")({
 
 // Pathless layout component used by chart overview and child routes.
 function ChartLayout() {
+	const loaderData = Route.useLoaderData() as
+		| { defaultOpen?: boolean }
+		| undefined;
+	const defaultOpen = loaderData?.defaultOpen ?? true;
+
 	return (
-		<div className="min-h-screen flex">
-			<aside className="w-64 border-r bg-sidebar/5">
+		<SidebarProvider defaultOpen={defaultOpen}>
+			<div className="min-h-screen flex">
 				<ChartSidebar />
-			</aside>
-			<div className="flex-1">
-				<div className="container mx-auto p-4 sm:p-6 lg:p-8">
-					<Outlet />
-				</div>
+				<SidebarInset>
+					<SidebarTrigger />
+					<div className="flex-1">
+						<div className="container mx-auto p-4 sm:p-6 lg:p-8">
+							<Outlet />
+						</div>
+					</div>
+				</SidebarInset>
 			</div>
-		</div>
+		</SidebarProvider>
 	);
 }

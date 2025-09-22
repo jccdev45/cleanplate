@@ -21,10 +21,9 @@ import {
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { SIDEBAR_COOKIE_MAX_AGE, SIDEBAR_COOKIE_NAME } from "@/lib/sidebar";
 import { cn } from "@/lib/utils";
-
-const SIDEBAR_COOKIE_NAME = "sidebar_state";
-const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
+import { useLocalStorage } from "usehooks-ts";
 const SIDEBAR_WIDTH = "16rem";
 const SIDEBAR_WIDTH_MOBILE = "18rem";
 const SIDEBAR_WIDTH_ICON = "3rem";
@@ -67,9 +66,19 @@ function SidebarProvider({
 	const isMobile = useIsMobile();
 	const [openMobile, setOpenMobile] = React.useState(false);
 
+	// Persisted open state in localStorage so collapse persists across sessions.
+	// Use initializeWithValue:false to avoid reading localStorage on the server.
+	const [persistedOpen, setPersistedOpen] = useLocalStorage<boolean>(
+		SIDEBAR_COOKIE_NAME,
+		defaultOpen,
+		{ initializeWithValue: false },
+	);
+
 	// This is the internal state of the sidebar.
 	// We use openProp and setOpenProp for control from outside the component.
-	const [_open, _setOpen] = React.useState(defaultOpen);
+	const [_open, _setOpen] = React.useState<boolean>(
+		typeof persistedOpen === "boolean" ? persistedOpen : defaultOpen,
+	);
 	const open = openProp ?? _open;
 	const setOpen = React.useCallback(
 		(value: boolean | ((value: boolean) => boolean)) => {
@@ -80,10 +89,17 @@ function SidebarProvider({
 				_setOpen(openState);
 			}
 
-			// This sets the cookie to keep the sidebar state.
-			document.cookie = `${SIDEBAR_COOKIE_NAME}=${openState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`;
+			// Persist to localStorage
+			try {
+				setPersistedOpen(openState);
+			} catch (_) {}
+
+			// Also set cookie for backwards compatibility
+			try {
+				document.cookie = `${SIDEBAR_COOKIE_NAME}=${openState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`;
+			} catch (_) {}
 		},
-		[setOpenProp, open],
+		[setOpenProp, open, setPersistedOpen],
 	);
 
 	// Helper to toggle the sidebar.

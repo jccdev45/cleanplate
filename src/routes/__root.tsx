@@ -1,7 +1,7 @@
-import { DefaultCatchBoundary } from "@/components/default-catch-boundary";
-import { Footer } from "@/components/footer.tsx";
-import { NavMenu } from "@/components/nav-menu.tsx";
-import { ThemeProvider } from "@/components/theme-provider";
+import { DefaultCatchBoundary } from "@/components/layout/default-catch-boundary";
+import { Footer } from "@/components/layout/footer";
+import { NavMenu } from "@/components/layout/nav-menu";
+import { ThemeProvider } from "@/components/shared/theme-provider";
 import TanStackQueryLayout from "@/integrations/tanstack-query/layout.tsx";
 import {
 	SITE_DEFAULT_DESCRIPTION,

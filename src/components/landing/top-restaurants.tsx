@@ -1,4 +1,4 @@
-import { RestaurantList } from "@/components/restaurant-list";
+import { RestaurantList } from "@/components/landing/restaurant-list";
 import type { Restaurant } from "@/types/restaurant";
 import { useLoaderData } from "@tanstack/react-router";
 

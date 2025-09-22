@@ -1,5 +1,3 @@
-import { DismissibleAlert } from "@/components/dismissible-alert";
-import { GenericErrorComponent } from "@/components/generic-error";
 import {
 	Hero,
 	HeroCTA,
@@ -8,11 +6,13 @@ import {
 	HeroOverlay,
 	HeroSubtitle,
 	HeroTitle,
-} from "@/components/hero";
-import { TopRestaurants } from "@/components/top-restaurants";
+} from "@/components/landing/hero";
+import { TopRestaurants } from "@/components/landing/top-restaurants";
+import { WorstRestaurants } from "@/components/landing/worst-restaurants";
+import { DismissibleAlert } from "@/components/shared/dismissible-alert";
+import { GenericErrorComponent } from "@/components/shared/generic-error";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card } from "@/components/ui/card";
-import { WorstRestaurants } from "@/components/worst-restaurants";
 import {
 	HERO_IMAGES,
 	SITE_DEFAULT_DESCRIPTION,

@@ -5,6 +5,7 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
+
 export function StatsStrip({
 	avgScore = "N/A",
 	totalCuisines = 0,

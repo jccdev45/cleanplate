@@ -1,5 +1,5 @@
 import { ChartSidebar } from "@/components/charts/chart-sidebar";
-import GenericErrorComponent from "@/components/generic-error";
+import GenericErrorComponent from "@/components/shared/generic-error";
 import {
 	SidebarInset,
 	SidebarProvider,

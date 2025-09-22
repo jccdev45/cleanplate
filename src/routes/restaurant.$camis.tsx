@@ -1,5 +1,5 @@
-import { GenericErrorComponent } from "@/components/generic-error";
 import { InspectionCard } from "@/components/restaurant/inspection-card";
+import { GenericErrorComponent } from "@/components/shared/generic-error";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";

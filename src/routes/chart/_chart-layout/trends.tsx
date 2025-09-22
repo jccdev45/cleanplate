@@ -1,6 +1,6 @@
 import { CuisineTrendsAreaChart } from "@/components/charts/cuisine-trends-area-chart";
-import { DefaultLoader } from "@/components/default-loader";
-import { GenericErrorComponent } from "@/components/generic-error";
+import { DefaultLoader } from "@/components/layout/default-loader";
+import { GenericErrorComponent } from "@/components/shared/generic-error";
 import { SITE_NAME } from "@/lib/constants";
 import { restaurantQueries } from "@/queries/restaurant";
 import seo from "@/utils/seo";
@@ -13,7 +13,7 @@ export const Route = createFileRoute("/chart/_chart-layout/trends")({
 	loader: async ({ context }) => {
 		await context.queryClient.ensureQueryData(
 			restaurantQueries.trendsAggregate({ topN: 6 }),
-		)
+		);
 	},
 	head: () => ({
 		meta: seo({
@@ -32,14 +32,14 @@ export const Route = createFileRoute("/chart/_chart-layout/trends")({
 function TrendsRoute() {
 	const { data: serverAgg } = useSuspenseQuery(
 		restaurantQueries.trendsAggregate({ topN: 6 }),
-	)
+	);
 
 	if (!serverAgg) return <DefaultLoader text="Loading trends..." />;
 
 	const { data: rawData, topCuisines } = serverAgg as unknown as {
 		data: Array<Record<string, string | number>>;
 		topCuisines: string[];
-	}
+	};
 	const data = rawData;
 
 	return (
@@ -47,5 +47,5 @@ function TrendsRoute() {
 			<h1 className="text-2xl font-bold mb-4">Cuisine Trends</h1>
 			<CuisineTrendsAreaChart data={data} topCuisines={topCuisines} />
 		</main>
-	)
+	);
 }

@@ -1,5 +1,5 @@
-import { DismissibleAlert } from "@/components/dismissible-alert";
-import { RestaurantCard } from "@/components/restaurant-card";
+import { RestaurantCard } from "@/components/restaurant/restaurant-card";
+import { DismissibleAlert } from "@/components/shared/dismissible-alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { Restaurant } from "@/types/restaurant";
 

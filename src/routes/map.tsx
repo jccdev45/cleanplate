@@ -1,10 +1,10 @@
 // TODO: Add cuisine filter (must figure out how to dynamically retrieve list of cuisines first)
 
-import { DefaultLoader } from "@/components/default-loader";
-import { DismissibleAlert } from "@/components/dismissible-alert";
-import { GenericErrorComponent } from "@/components/generic-error";
+import { DefaultLoader } from "@/components/layout/default-loader";
 import { MapFilters } from "@/components/map/map-filters";
 import { RestaurantMap } from "@/components/map/restaurant-map";
+import { DismissibleAlert } from "@/components/shared/dismissible-alert";
+import { GenericErrorComponent } from "@/components/shared/generic-error";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { SITE_NAME } from "@/lib/constants";

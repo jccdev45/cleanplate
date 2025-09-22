@@ -1,6 +1,6 @@
 // TODO: Add search bar with result display dropdown
 
-import { useTheme } from "@/components/theme-provider";
+import { useTheme } from "@/components/shared/theme-provider";
 import { Button } from "@/components/ui/button";
 import {
 	Sheet,

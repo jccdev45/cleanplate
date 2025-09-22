@@ -1,6 +1,6 @@
-import { DefaultLoader } from "@/components/default-loader";
-import { DismissibleAlert } from "@/components/dismissible-alert";
-import { GenericErrorComponent } from "@/components/generic-error";
+import { DefaultLoader } from "@/components/layout/default-loader";
+import { DismissibleAlert } from "@/components/shared/dismissible-alert";
+import { GenericErrorComponent } from "@/components/shared/generic-error";
 import { columns } from "@/components/table/columns";
 import { DataTable } from "@/components/table/data-table";
 import { Input } from "@/components/ui/input";

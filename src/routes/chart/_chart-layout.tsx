@@ -5,7 +5,6 @@ import {
 	SidebarProvider,
 	SidebarTrigger,
 } from "@/components/ui/sidebar";
-import { SITE_NAME } from "@/lib/constants";
 import getSidebarStateServerFn from "@/lib/sidebar";
 import { seo } from "@/utils/seo";
 import {
@@ -27,7 +26,7 @@ export const Route = createFileRoute("/chart/_chart-layout")({
 	},
 	head: () => ({
 		meta: seo({
-			title: `Charts | ${SITE_NAME}`,
+			title: "Charts",
 			description:
 				"Visual dashboard for NYC restaurant inspection trends by borough, cuisine, and score.",
 			image: SITE_URL
@@ -59,7 +58,7 @@ function ChartLayout() {
 				<ChartSidebar />
 				<SidebarInset className="flex-1">
 					<SidebarTrigger />
-					<div className="mx-auto p-4 w-full sm:p-6 lg:p-8">
+					<div className="mx-auto p-4 w-full sm:p-0">
 						<Outlet />
 					</div>
 				</SidebarInset>

@@ -1,5 +1,6 @@
 import { BoroughBarChart } from "@/components/charts/borough-bar-chart";
 import { DefaultLoader } from "@/components/layout/default-loader";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { restaurantQueries } from "@/queries/restaurant";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
@@ -45,6 +46,17 @@ function BoroughRoute() {
 	return (
 		<section className="">
 			<h1 className="text-2xl font-bold mb-4">Borough Counts</h1>
+
+			<Alert className="mb-6">
+				<AlertTitle>About borough counts</AlertTitle>
+				<AlertDescription>
+					These counts reflect how many restaurants in the dataset are
+					associated with each borough value. Some records may use alternate or
+					missing borough values; results are based on the most recent
+					inspection record available for each restaurant.
+				</AlertDescription>
+			</Alert>
+
 			<BoroughBarChart data={boroughData} />
 		</section>
 	);

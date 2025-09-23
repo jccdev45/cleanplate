@@ -157,5 +157,3 @@ function TableRoute() {
 		</div>
 	);
 }
-
-// TableErrorComponent removed — route uses shared GenericErrorComponent

@@ -1,5 +1,6 @@
 import { CriticalFlagPieChart } from "@/components/charts/critical-flag-pie-chart";
 import { DefaultLoader } from "@/components/layout/default-loader";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { restaurantQueries } from "@/queries/restaurant";
 import type { Restaurant } from "@/types/restaurant";
 import { useSuspenseQuery } from "@tanstack/react-query";
@@ -49,6 +50,19 @@ function CriticalRoute() {
 	return (
 		<section className="">
 			<h1 className="text-2xl font-bold mb-4">Critical Flag Distribution</h1>
+
+			<Alert className="mb-6">
+				<AlertTitle>About critical flags</AlertTitle>
+				<AlertDescription>
+					Critical (sanitary) violations are issued when the safety of the food
+					being prepared and served is threatened. These are the most important
+					inspection findings and are scored as sanitary violations. Examples
+					include unsafe food temperatures or evidence of pests. This chart
+					shows the distribution of critical-flag values found on the most
+					recent inspections.
+				</AlertDescription>
+			</Alert>
+
 			<div className="flex justify-center">
 				<CriticalFlagPieChart data={flagData} />
 			</div>

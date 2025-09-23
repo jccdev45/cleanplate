@@ -1,5 +1,6 @@
 import { ScoreBarChart } from "@/components/charts/score-bar-chart";
 import { DefaultLoader } from "@/components/layout/default-loader";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { restaurantQueries } from "@/queries/restaurant";
 import type { Restaurant } from "@/types/restaurant";
 import { useSuspenseQuery } from "@tanstack/react-query";
@@ -57,6 +58,18 @@ function ScoreRoute() {
 	return (
 		<section className="">
 			<h1 className="text-2xl font-bold mb-4">Score Histogram</h1>
+
+			<Alert className="mb-6">
+				<AlertTitle>What scores mean</AlertTitle>
+				<AlertDescription>
+					Inspection scores are totals of point values for sanitary violations;
+					lower is better. Typical bins shown here map to letter grades (A/B/C):
+					0–13 points = A, 14–27 = B, 28+ = C. The histogram aggregates the most
+					recent inspection score for each restaurant. Some records may be
+					missing scores or use special grade codes instead of a numeric score.
+				</AlertDescription>
+			</Alert>
+
 			<ScoreBarChart data={histogram} />
 		</section>
 	);

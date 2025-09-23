@@ -1,5 +1,6 @@
 import { GradePieChart } from "@/components/charts/grade-pie-chart";
 import { DefaultLoader } from "@/components/layout/default-loader";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { restaurantQueries } from "@/queries/restaurant";
 import type { Restaurant } from "@/types/restaurant";
 import { useSuspenseQuery } from "@tanstack/react-query";
@@ -46,6 +47,23 @@ function GradeRoute() {
 	return (
 		<section className="">
 			<h1 className="text-2xl font-bold mb-4">Grade Distribution</h1>
+
+			<Alert className="mb-6">
+				<AlertTitle>How grades are determined</AlertTitle>
+				<AlertDescription>
+					Violations flagged as sanitary carry point values; a restaurant's
+					score maps to a letter grade. The cut-offs are:
+					<ul className="list-disc ml-5 mt-2">
+						<li>A: 0–13 points</li>
+						<li>B: 14–27 points</li>
+						<li>C: 28+ points</li>
+					</ul>
+					Some inspections show special grade codes: N = Not Yet Graded; Z =
+					Grade Pending; P = Grade Pending issued on re-opening after a closure.
+					This chart shows the latest grade recorded for each restaurant.
+				</AlertDescription>
+			</Alert>
+
 			<div className="flex justify-center">
 				<GradePieChart data={gradeData} />
 			</div>

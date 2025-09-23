@@ -1,6 +1,7 @@
 import { CuisineTrendsAreaChart } from "@/components/charts/cuisine-trends-area-chart";
 import { DefaultLoader } from "@/components/layout/default-loader";
 import { GenericErrorComponent } from "@/components/shared/generic-error";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { restaurantQueries } from "@/queries/restaurant";
 import { seo } from "@/utils/seo";
 import { useSuspenseQuery } from "@tanstack/react-query";
@@ -44,6 +45,15 @@ function TrendsRoute() {
 	return (
 		<main className="p-6">
 			<h1 className="text-2xl font-bold mb-4">Cuisine Trends</h1>
+
+			<Alert className="mb-6">
+				<AlertTitle>Trends explanation</AlertTitle>
+				<AlertDescription>
+					This chart shows how the top cuisines' representation changes over
+					time based on inspection records.
+				</AlertDescription>
+			</Alert>
+
 			<CuisineTrendsAreaChart data={data} topCuisines={topCuisines} />
 		</main>
 	);

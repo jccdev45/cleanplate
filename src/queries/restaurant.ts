@@ -127,7 +127,7 @@ export const restaurantQueries = {
 		}),
 
 	trendsAggregate: (opts?: {
-		topN?: number;
+		topNumber?: number;
 		minYear?: number;
 		maxYear?: number;
 	}) =>

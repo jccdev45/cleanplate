@@ -3,7 +3,7 @@ import { DefaultLoader } from "@/components/layout/default-loader";
 import { GenericErrorComponent } from "@/components/shared/generic-error";
 import { SITE_NAME } from "@/lib/constants";
 import { restaurantQueries } from "@/queries/restaurant";
-import seo from "@/utils/seo";
+import { seo } from "@/utils/seo";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 
@@ -12,7 +12,7 @@ const SITE_URL = process.env.SITE_URL ?? "";
 export const Route = createFileRoute("/chart/_chart-layout/trends")({
 	loader: async ({ context }) => {
 		await context.queryClient.ensureQueryData(
-			restaurantQueries.trendsAggregate({ topN: 6 }),
+			restaurantQueries.trendsAggregate({ topNumber: 6 }),
 		);
 	},
 	head: () => ({
@@ -31,7 +31,7 @@ export const Route = createFileRoute("/chart/_chart-layout/trends")({
 
 function TrendsRoute() {
 	const { data: serverAgg } = useSuspenseQuery(
-		restaurantQueries.trendsAggregate({ topN: 6 }),
+		restaurantQueries.trendsAggregate({ topNumber: 6 }),
 	);
 
 	if (!serverAgg) return <DefaultLoader text="Loading trends..." />;

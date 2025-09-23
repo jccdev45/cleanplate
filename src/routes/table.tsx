@@ -4,7 +4,6 @@ import { GenericErrorComponent } from "@/components/shared/generic-error";
 import { columns } from "@/components/table/columns";
 import { DataTable } from "@/components/table/data-table";
 import { Input } from "@/components/ui/input";
-import { SITE_NAME } from "@/lib/constants";
 import { restaurantQueries } from "@/queries/restaurant";
 import { restaurantSearchParamsSchema } from "@/schema/schema";
 import type { Restaurant } from "@/types/restaurant";
@@ -37,7 +36,7 @@ export const Route = createFileRoute("/table")({
 	},
 	head: () => ({
 		meta: seo({
-			title: `Table | ${SITE_NAME}`,
+			title: "Table",
 			description:
 				"Browse the full dataset of NYC restaurant inspections in a searchable table. Filter and export results.",
 			image: SITE_URL

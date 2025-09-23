@@ -7,7 +7,6 @@ import { DismissibleAlert } from "@/components/shared/dismissible-alert";
 import { GenericErrorComponent } from "@/components/shared/generic-error";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { SITE_NAME } from "@/lib/constants";
 import { restaurantQueries } from "@/queries/restaurant";
 import {
 	GRADES,
@@ -49,7 +48,7 @@ export const Route = createFileRoute("/map")({
 	ssr: "data-only",
 	head: () => ({
 		meta: seo({
-			title: `Map | ${SITE_NAME}`,
+			title: "Map",
 			description:
 				"Interactive map of NYC restaurant inspection results. Filter by grade, borough, and inspection date.",
 			image: SITE_URL

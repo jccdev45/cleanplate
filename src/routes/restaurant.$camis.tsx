@@ -16,7 +16,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
 	SITE_DEFAULT_DESCRIPTION,
 	SITE_DEFAULT_OG_IMAGE,
-	SITE_NAME,
 } from "@/lib/constants";
 import { restaurantQueries } from "@/queries/restaurant";
 import type { Restaurant } from "@/types/restaurant";
@@ -46,7 +45,7 @@ export const Route = createFileRoute("/restaurant/$camis")({
 	),
 	head: ({ loaderData, params }) => {
 		const d = loaderData?.restaurants?.[0];
-		const title = d ? `${d.dba} | ${SITE_NAME}` : `Restaurant | ${SITE_NAME}`;
+		const title = d ? `${d.dba}` : "Restaurant";
 		const description = d
 			? `${d.dba} in ${d.boro}. Latest grade: ${d.inspections?.[0]?.grade ?? "N/A"}. View inspection history and violations.`
 			: SITE_DEFAULT_DESCRIPTION;

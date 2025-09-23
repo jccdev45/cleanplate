@@ -30,7 +30,7 @@ function GradeRoute() {
 	}, [data.restaurants]);
 
 	return (
-		<section className="p-6">
+		<section className="">
 			<h1 className="text-2xl font-bold mb-4">Grade Distribution</h1>
 			<div className="flex justify-center">
 				<GradePieChart data={gradeData} />

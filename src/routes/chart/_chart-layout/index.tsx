@@ -46,7 +46,7 @@ function RouteComponent() {
 		: "0.0";
 
 	return (
-		<section className="p-6">
+		<section className="">
 			<div className="text-center mb-6">
 				<h1 className="text-2xl font-bold">Restaurant Data Dashboard</h1>
 				<p className="text-sm text-muted-foreground">Overview and charts</p>

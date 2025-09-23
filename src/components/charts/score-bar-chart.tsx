@@ -3,6 +3,7 @@ import {
 	ChartContainer,
 	ChartTooltip,
 	ChartTooltipContent,
+	type CustomTooltipProps,
 } from "@/components/ui/chart";
 import { CHART_CONFIG } from "@/lib/constants";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
@@ -17,7 +18,7 @@ export function ScoreBarChart({
 			</CardHeader>
 			<CardContent>
 				<ChartContainer config={CHART_CONFIG} className="h-[300px] w-full">
-					<BarChart data={data} barSize={40}>
+					<BarChart data={data} barCategoryGap="20%">
 						<CartesianGrid vertical={false} />
 						<XAxis
 							dataKey="name"
@@ -26,7 +27,12 @@ export function ScoreBarChart({
 							axisLine={false}
 						/>
 						<YAxis />
-						<ChartTooltip content={<ChartTooltipContent />} />
+						<ChartTooltip
+							cursor={false}
+							content={(props: CustomTooltipProps) => (
+								<ChartTooltipContent {...props} hideIndicator hideLabel />
+							)}
+						/>
 						<Bar dataKey="count" fill={CHART_CONFIG.scores.color} radius={4} />
 					</BarChart>
 				</ChartContainer>

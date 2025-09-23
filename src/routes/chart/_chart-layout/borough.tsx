@@ -30,7 +30,7 @@ function BoroughRoute() {
 	}, [data.restaurants]);
 
 	return (
-		<section className="p-6">
+		<section className="">
 			<h1 className="text-2xl font-bold mb-4">Borough Counts</h1>
 			<BoroughBarChart data={boroughData} />
 		</section>

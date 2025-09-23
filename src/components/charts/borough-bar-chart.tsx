@@ -9,6 +9,7 @@ import {
 	ChartContainer,
 	ChartTooltip,
 	ChartTooltipContent,
+	type CustomTooltipProps,
 } from "@/components/ui/chart";
 import { CHART_CONFIG } from "@/lib/constants";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
@@ -25,12 +26,15 @@ export function BoroughBarChart({
 				</CardDescription>
 			</CardHeader>
 			<CardContent>
-				<ChartContainer config={CHART_CONFIG} className="h-[400px] w-full">
+				<ChartContainer
+					config={CHART_CONFIG}
+					className="min-h-[150px] w-full mx-auto"
+				>
 					<BarChart
 						layout="vertical"
 						accessibilityLayer
 						data={data}
-						barSize={32}
+						barCategoryGap="12%"
 					>
 						<CartesianGrid horizontal={false} />
 						<XAxis type="number" domain={[0, "dataMax + 50"]} hide />
@@ -41,7 +45,12 @@ export function BoroughBarChart({
 							axisLine={false}
 							width={80}
 						/>
-						<ChartTooltip content={<ChartTooltipContent />} />
+						<ChartTooltip
+							cursor={false}
+							content={(props: CustomTooltipProps) => (
+								<ChartTooltipContent {...props} hideIndicator hideLabel />
+							)}
+						/>
 						<Bar dataKey="count" fill={"var(--chart-5)"} radius={4} />
 					</BarChart>
 				</ChartContainer>

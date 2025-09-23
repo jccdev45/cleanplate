@@ -40,7 +40,7 @@ function ScoreRoute() {
 	});
 
 	return (
-		<section className="p-6">
+		<section className="">
 			<h1 className="text-2xl font-bold mb-4">Score Histogram</h1>
 			<ScoreBarChart data={histogram} />
 		</section>

@@ -10,6 +10,7 @@ import {
 	ChartLegend,
 	ChartTooltip,
 	ChartTooltipContent,
+	type CustomTooltipProps,
 } from "@/components/ui/chart";
 import { CHART_CONFIG } from "@/lib/constants";
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
@@ -36,7 +37,12 @@ export function CuisineTrendsAreaChart({
 						<CartesianGrid strokeDasharray="3 3" />
 						<XAxis dataKey="year" tickLine={false} axisLine={false} />
 						<YAxis allowDecimals={false} />
-						<ChartTooltip content={<ChartTooltipContent />} />
+						<ChartTooltip
+							cursor={false}
+							content={(props: CustomTooltipProps) => (
+								<ChartTooltipContent {...props} hideIndicator hideLabel />
+							)}
+						/>
 						<ChartLegend />
 						{topCuisines.map((cuisine, idx) => (
 							<Area

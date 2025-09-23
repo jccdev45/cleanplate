@@ -4,6 +4,7 @@ import {
 	ChartLegend,
 	ChartTooltip,
 	ChartTooltipContent,
+	type CustomTooltipProps,
 } from "@/components/ui/chart";
 import { CHART_CONFIG } from "@/lib/constants";
 import { Cell, Pie, PieChart } from "recharts";
@@ -19,17 +20,22 @@ export function GradePieChart({
 			<CardContent>
 				<ChartContainer
 					config={CHART_CONFIG}
-					className="h-[300px] w-full flex items-center justify-center"
+					className="min-h-[150px] md:min-h-[300px] w-full"
 				>
-					<PieChart>
-						<ChartTooltip content={<ChartTooltipContent />} />
+					<PieChart accessibilityLayer>
+						<ChartTooltip
+							cursor={false}
+							content={(props: CustomTooltipProps) => (
+								<ChartTooltipContent {...props} hideIndicator hideLabel />
+							)}
+						/>
 						<Pie
 							data={data}
 							dataKey="count"
 							nameKey="grade"
 							cx="50%"
 							cy="50%"
-							outerRadius={80}
+							outerRadius="60%"
 							label
 						>
 							{data.map((entry) => (

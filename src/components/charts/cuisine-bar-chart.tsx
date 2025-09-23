@@ -10,6 +10,7 @@ import {
 	ChartLegend,
 	ChartTooltip,
 	ChartTooltipContent,
+	type CustomTooltipProps,
 } from "@/components/ui/chart";
 import { CHART_CONFIG } from "@/lib/constants";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
@@ -27,7 +28,7 @@ export function CuisineBarChart({
 			</CardHeader>
 			<CardContent>
 				<ChartContainer config={CHART_CONFIG} className="h-[400px] w-full">
-					<BarChart accessibilityLayer data={data} barSize={32}>
+					<BarChart accessibilityLayer data={data} barCategoryGap="16%">
 						<CartesianGrid vertical={false} />
 						<XAxis
 							dataKey="cuisine"
@@ -39,7 +40,12 @@ export function CuisineBarChart({
 							}
 						/>
 						<YAxis />
-						<ChartTooltip content={<ChartTooltipContent />} />
+						<ChartTooltip
+							cursor={false}
+							content={(props: CustomTooltipProps) => (
+								<ChartTooltipContent {...props} hideIndicator hideLabel />
+							)}
+						/>
 						<ChartLegend />
 						<Bar dataKey="count" fill={CHART_CONFIG.count.color} radius={4} />
 					</BarChart>

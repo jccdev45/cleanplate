@@ -32,7 +32,7 @@ function CriticalRoute() {
 	}, [data.restaurants]);
 
 	return (
-		<section className="p-6">
+		<section className="">
 			<h1 className="text-2xl font-bold mb-4">Critical Flag Distribution</h1>
 			<div className="flex justify-center">
 				<CriticalFlagPieChart data={flagData} />

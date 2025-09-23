@@ -16,7 +16,6 @@ import {
 	MapIcon,
 	PieChartIcon,
 } from "lucide-react";
-// React import not required with automatic JSX runtime
 import { useLocalStorage } from "usehooks-ts";
 
 const items = [
@@ -82,11 +81,7 @@ export function ChartSidebar() {
 									activeOptions={{ exact: true }}
 								>
 									<item.icon className="size-4" aria-hidden />
-									<span
-										className={`${collapsed ? "sr-only" : "hidden lg:inline"}`}
-									>
-										{item.label}
-									</span>
+									<span>{item.label}</span>
 								</Link>
 							</SidebarMenuButton>
 						</SidebarMenuItem>

@@ -31,7 +31,7 @@ function CuisineRoute() {
 	}, [data.restaurants]);
 
 	return (
-		<section className="p-6">
+		<section className="">
 			<h1 className="text-2xl font-bold mb-4">Cuisine Counts</h1>
 			<CuisineBarChart data={cuisineChartData} />
 		</section>

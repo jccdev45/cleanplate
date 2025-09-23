@@ -3,12 +3,13 @@ import { DefaultLoader } from "@/components/layout/default-loader";
 import { restaurantQueries } from "@/queries/restaurant";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import React from "react";
+import { useMemo } from "react";
 
 export const Route = createFileRoute("/chart/_chart-layout/borough")({
+	// TODO: Add `head` for metadata
 	loader: async ({ context }) => {
 		await context.queryClient.ensureQueryData(
-			restaurantQueries.boroughCounts({ $limit: 10000 }),
+			restaurantQueries.boroughCounts(),
 		);
 	},
 	component: BoroughRoute,
@@ -18,16 +19,28 @@ function BoroughRoute() {
 	const { data } = useSuspenseQuery(restaurantQueries.boroughCounts());
 	if (!data) return <DefaultLoader text="Loading borough counts..." />;
 
-	const boroughData = React.useMemo(() => {
+	// Server shape: { data: Array<{ boro, count }> }
+	const boroughData = useMemo(() => {
+		if (
+			data &&
+			typeof data === "object" &&
+			Array.isArray((data as unknown as Record<string, unknown>).data)
+		) {
+			return (
+				data as unknown as { data: Array<{ boro: string; count: number }> }
+			).data;
+		}
 		const counts: Record<string, number> = {};
-		for (const r of data.restaurants) {
-			const boro = r.boro || "Other";
+		const restaurants = (data as unknown as Record<string, unknown> | undefined)
+			?.restaurants as Array<Record<string, unknown>> | undefined;
+		for (const r of restaurants ?? []) {
+			const boro = (r.boro as string) || "Other";
 			counts[boro] = (counts[boro] || 0) + 1;
 		}
 		return Object.entries(counts)
 			.sort((a, b) => b[1] - a[1])
 			.map(([boro, count]) => ({ boro, count }));
-	}, [data.restaurants]);
+	}, [data]);
 
 	return (
 		<section className="">

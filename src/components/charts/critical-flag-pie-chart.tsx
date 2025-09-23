@@ -18,7 +18,10 @@ export function CriticalFlagPieChart({
 				<CardTitle>Critical Flag Distribution</CardTitle>
 			</CardHeader>
 			<CardContent className="flex items-center justify-center">
-				<ChartContainer config={CHART_CONFIG} className="h-[300px] w-full">
+				<ChartContainer
+					config={CHART_CONFIG}
+					className="min-h-[150px] md:min-h-[200px] lg:min-h-[300px] w-full"
+				>
 					<PieChart accessibilityLayer>
 						<ChartTooltip
 							cursor={false}

@@ -20,7 +20,7 @@ export function GradePieChart({
 			<CardContent>
 				<ChartContainer
 					config={CHART_CONFIG}
-					className="min-h-[150px] md:min-h-[300px] w-full"
+					className="min-h-[150px] md:min-h-[200px] lg:min-h-[300px] w-full"
 				>
 					<PieChart accessibilityLayer>
 						<ChartTooltip

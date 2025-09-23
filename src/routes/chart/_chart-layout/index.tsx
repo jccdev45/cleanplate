@@ -4,46 +4,39 @@ import { restaurantQueries } from "@/queries/restaurant";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 
-const $limit = 10000;
-
 export const Route = createFileRoute("/chart/_chart-layout/")({
+	// TODO: Add `head` for metadata
 	loader: async ({ context }) => {
 		await context.queryClient.ensureQueryData(
-			restaurantQueries.list({ $limit }),
+			restaurantQueries.dashboardStats(),
 		);
 	},
 	component: RouteComponent,
 });
 
+type DashboardStats = {
+	totalRestaurants?: number;
+	avgScore?: number | null;
+	totalCuisines?: number;
+	pctGradeA?: number;
+	pctCritical?: number;
+	topCuisines?: Array<{ cuisine: string; count?: number }>;
+};
+
 function RouteComponent() {
 	const { data, isLoading } = useSuspenseQuery(
-		restaurantQueries.list({ $limit }),
+		restaurantQueries.dashboardStats(),
 	);
 	if (isLoading) return <DefaultLoader text="Loading chart data..." />;
 
-	const scores: number[] = [];
-	let totalCuisines = 0;
-	let gradeACount = 0;
-
-	if (data) {
-		const cuisineSet = new Set<string>();
-		for (const r of data.restaurants) {
-			cuisineSet.add(r.cuisine_description || "Other");
-			const score = r.inspections[0]?.score;
-			if (score !== undefined && score !== null && Number.isFinite(score))
-				scores.push(score);
-			const grade = r.inspections[0]?.grade;
-			if (grade === "A") gradeACount += 1;
-		}
-		totalCuisines = cuisineSet.size;
-	}
-
-	const avgScore = scores.length
-		? (scores.reduce((a, b) => a + b, 0) / scores.length).toFixed(1)
-		: "N/A";
-	const percentageA = data
-		? ((gradeACount / data.restaurants.length) * 100).toFixed(1)
-		: "0.0";
+	// server shape: { totalRestaurants, avgScore, totalCuisines, pctGradeA, pctCritical, topCuisines }
+	const stats = (data as unknown as DashboardStats) ?? {};
+	const totalRestaurants = stats.totalRestaurants;
+	const avgScore = stats.avgScore;
+	const totalCuisines = stats.totalCuisines;
+	const pctGradeA = stats.pctGradeA;
+	const pctCritical = stats.pctCritical;
+	const topCuisines = stats.topCuisines;
 
 	return (
 		<section className="">
@@ -51,17 +44,30 @@ function RouteComponent() {
 				<h1 className="text-2xl font-bold">Restaurant Data Dashboard</h1>
 				<p className="text-sm text-muted-foreground">Overview and charts</p>
 			</div>
+
 			<StatsStrip
-				avgScore={avgScore}
+				avgScore={avgScore?.toFixed ? avgScore.toFixed(1) : (avgScore ?? "N/A")}
 				totalCuisines={totalCuisines}
-				percentageGradeA={percentageA}
+				percentageGradeA={
+					pctGradeA?.toFixed ? pctGradeA.toFixed(1) : (pctGradeA ?? "0.0")
+				}
+				totalRestaurants={totalRestaurants}
+				percentageCritical={pctCritical}
+				topCuisines={topCuisines ?? []}
 			/>
-			<section className="mb-6">
-				<p className="text-center text-muted-foreground">
-					Charts are available below (phase 1 overview). Use the Chart page
-					navigation to view each chart.
+
+			<div className="mt-6 max-w-3xl mx-auto text-sm text-muted-foreground">
+				<p>
+					This dashboard surfaces high-level statistics computed from the NYC
+					inspections dataset. Use the charts below to explore how inspections
+					vary across boroughs, cuisines, and time.
 				</p>
-			</section>
+				<p className="mt-3">
+					Quick tips: use the filters on the map page to narrow by year or
+					neighborhood, or open a restaurant card to view inspection history and
+					violations.
+				</p>
+			</div>
 		</section>
 	);
 }

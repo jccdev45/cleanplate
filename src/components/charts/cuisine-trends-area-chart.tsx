@@ -29,7 +29,7 @@ export function CuisineTrendsAreaChart({
 				</CardDescription>
 			</CardHeader>
 			<CardContent>
-				<ChartContainer config={CHART_CONFIG} className="h-[400px] w-full">
+				<ChartContainer config={CHART_CONFIG} className="min-h-[150px] w-full">
 					<AreaChart
 						data={data}
 						margin={{ top: 20, right: 30, left: 0, bottom: 0 }}

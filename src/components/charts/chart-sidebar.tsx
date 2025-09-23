@@ -6,7 +6,6 @@ import {
 	SidebarMenuButton,
 	SidebarMenuItem,
 	SidebarTrigger,
-	useSidebar,
 } from "@/components/ui/sidebar";
 import { Link } from "@tanstack/react-router";
 import {
@@ -16,7 +15,6 @@ import {
 	MapIcon,
 	PieChartIcon,
 } from "lucide-react";
-import { useLocalStorage } from "usehooks-ts";
 
 const items = [
 	{ to: "/chart", label: "Overview", icon: ChartBarIcon },
@@ -29,44 +27,11 @@ const items = [
 ];
 
 export function ChartSidebar() {
-	// useSidebar comes from our shadcn-style provider; fallback to local collapsed state
-	type SidebarCtx = { state?: string; toggleSidebar?: () => void };
-
-	let ctx: unknown = null;
-	try {
-		ctx = useSidebar();
-	} catch (e) {
-		// not inside provider
-	}
-
-	const [localCollapsed, setLocalCollapsed] = useLocalStorage<boolean>(
-		"chart_sidebar_collapsed",
-		false,
-	);
-
-	const collapsed =
-		ctx && typeof ctx === "object" && ctx !== null && "state" in ctx
-			? (ctx as SidebarCtx).state === "collapsed"
-			: localCollapsed;
-
-	const toggle = () => {
-		if (
-			ctx &&
-			typeof ctx === "object" &&
-			ctx !== null &&
-			"toggleSidebar" in ctx
-		) {
-			(ctx as SidebarCtx).toggleSidebar?.();
-		} else {
-			setLocalCollapsed((s) => !s);
-		}
-	};
-
 	return (
 		<Sidebar className="bg-transparent">
 			<SidebarHeader>
-				<div className={`font-bold ${collapsed ? "sr-only" : ""}`}>Charts</div>
-				<SidebarTrigger className="ml-auto" onClick={toggle} />
+				<div className="font-bold">Charts</div>
+				<SidebarTrigger className="ml-auto" />
 			</SidebarHeader>
 
 			<SidebarContent>

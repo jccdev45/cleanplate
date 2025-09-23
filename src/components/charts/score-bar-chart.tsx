@@ -17,7 +17,10 @@ export function ScoreBarChart({
 				<CardTitle>Score Distribution</CardTitle>
 			</CardHeader>
 			<CardContent>
-				<ChartContainer config={CHART_CONFIG} className="h-[300px] w-full">
+				<ChartContainer
+					config={CHART_CONFIG}
+					className="min-h-[150px] md:min-h-[200px] lg:min-h-[300px] w-full"
+				>
 					<BarChart data={data} barCategoryGap="20%">
 						<CartesianGrid vertical={false} />
 						<XAxis

@@ -28,7 +28,7 @@ export function BoroughBarChart({
 			<CardContent>
 				<ChartContainer
 					config={CHART_CONFIG}
-					className="min-h-[150px] w-full mx-auto"
+					className="min-h-[150px] md:min-h-[200px] lg:min-h-[300px] w-full mx-auto"
 				>
 					<BarChart
 						layout="vertical"

@@ -1,7 +1,6 @@
 import { CuisineTrendsAreaChart } from "@/components/charts/cuisine-trends-area-chart";
 import { DefaultLoader } from "@/components/layout/default-loader";
 import { GenericErrorComponent } from "@/components/shared/generic-error";
-import { SITE_NAME } from "@/lib/constants";
 import { restaurantQueries } from "@/queries/restaurant";
 import { seo } from "@/utils/seo";
 import { useSuspenseQuery } from "@tanstack/react-query";
@@ -17,7 +16,7 @@ export const Route = createFileRoute("/chart/_chart-layout/trends")({
 	},
 	head: () => ({
 		meta: seo({
-			title: `Trends | ${SITE_NAME}`,
+			title: "Trends",
 			description: "Cuisine trends over time.",
 			image: SITE_URL ? `${SITE_URL}/images/cosmic-diner.jpg` : undefined,
 			url: SITE_URL ? `${SITE_URL}/chart/trends` : undefined,

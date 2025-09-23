@@ -27,7 +27,10 @@ export function CuisineBarChart({
 				</CardDescription>
 			</CardHeader>
 			<CardContent>
-				<ChartContainer config={CHART_CONFIG} className="h-[400px] w-full">
+				<ChartContainer
+					config={CHART_CONFIG}
+					className="min-h-[150px] md:min-h-[200px] lg:min-h-[300px] w-full"
+				>
 					<BarChart accessibilityLayer data={data} barCategoryGap="16%">
 						<CartesianGrid vertical={false} />
 						<XAxis

@@ -1,13 +1,15 @@
 import { ScoreBarChart } from "@/components/charts/score-bar-chart";
 import { DefaultLoader } from "@/components/layout/default-loader";
 import { restaurantQueries } from "@/queries/restaurant";
+import type { Restaurant } from "@/types/restaurant";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/chart/_chart-layout/score")({
+	// TODO: Add `head` for metadata
 	loader: async ({ context }) => {
 		await context.queryClient.ensureQueryData(
-			restaurantQueries.scoreHistogram({ $limit: 10000 }),
+			restaurantQueries.scoreHistogram(),
 		);
 	},
 	component: ScoreRoute,
@@ -25,19 +27,32 @@ function ScoreRoute() {
 		"45+ (C or worse)",
 	];
 
-	const scores: number[] = [];
-	for (const r of data.restaurants) {
-		const s = r.inspections[0]?.score;
-		if (s !== undefined && s !== null && Number.isFinite(s)) scores.push(s);
-	}
-
-	const histogram = scoreBins.slice(0, -1).map((bin, i) => {
-		const nextBin = scoreBins[i + 1];
-		return {
-			name: scoreLabels[i],
-			count: scores.filter((score) => score >= bin && score < nextBin).length,
-		};
-	});
+	// Server shape: { data: Array<{ score, count }> }
+	const histogram = Array.isArray(
+		(data as unknown as Record<string, unknown>).data,
+	)
+		? (
+				data as unknown as { data: Array<{ score: number; count: number }> }
+			).data.map((d) => ({ name: String(d.score), count: d.count }))
+		: (() => {
+				const scores: number[] = [];
+				const restaurants =
+					(data as unknown as { restaurants?: Array<Restaurant> })
+						?.restaurants ?? [];
+				for (const r of restaurants) {
+					const s = r.inspections?.[0]?.score as number | undefined;
+					if (s !== undefined && s !== null && Number.isFinite(s))
+						scores.push(s);
+				}
+				return scoreBins.slice(0, -1).map((bin, i) => {
+					const nextBin = scoreBins[i + 1];
+					return {
+						name: scoreLabels[i],
+						count: scores.filter((score) => score >= bin && score < nextBin)
+							.length,
+					};
+				});
+			})();
 
 	return (
 		<section className="">

@@ -30,5 +30,3 @@ export function seo({ title, description, image, url }: SeoOpts) {
 		...(url ? [{ property: "og:url", content: url }] : []),
 	];
 }
-
-export default seo;

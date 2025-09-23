@@ -29,7 +29,7 @@ import {
 	gradeVariant,
 	mapInspectionView,
 } from "@/utils/restaurant-view";
-import seo from "@/utils/seo";
+import { seo } from "@/utils/seo";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { ExternalLinkIcon, MapPinnedIcon, XCircleIcon } from "lucide-react";

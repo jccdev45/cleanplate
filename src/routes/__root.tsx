@@ -11,7 +11,7 @@ import {
 // Hybrid: server provides initial theme (cookie) and client ScriptOnce uses it to avoid FOUC
 import { getThemeServerFn } from "@/lib/theme";
 import appCss from "@/styles.css?url";
-import seo from "@/utils/seo";
+import { seo } from "@/utils/seo";
 import type { QueryClient } from "@tanstack/react-query";
 import {
 	HeadContent,

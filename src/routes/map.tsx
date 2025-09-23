@@ -15,7 +15,7 @@ import {
 	restaurantSearchParamsSchema,
 } from "@/schema/schema";
 import { normalizeParams } from "@/utils/normalize-params";
-import seo from "@/utils/seo";
+import { seo } from "@/utils/seo";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import {
 	type ErrorComponentProps,

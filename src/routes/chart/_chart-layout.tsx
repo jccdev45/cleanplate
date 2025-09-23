@@ -7,7 +7,7 @@ import {
 } from "@/components/ui/sidebar";
 import { SITE_NAME } from "@/lib/constants";
 import getSidebarStateServerFn from "@/lib/sidebar";
-import seo from "@/utils/seo";
+import { seo } from "@/utils/seo";
 import {
 	type ErrorComponentProps,
 	Outlet,

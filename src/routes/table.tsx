@@ -8,7 +8,7 @@ import { SITE_NAME } from "@/lib/constants";
 import { restaurantQueries } from "@/queries/restaurant";
 import { restaurantSearchParamsSchema } from "@/schema/schema";
 import type { Restaurant } from "@/types/restaurant";
-import seo from "@/utils/seo";
+import { seo } from "@/utils/seo";
 import { useSuspenseInfiniteQuery } from "@tanstack/react-query";
 import {
 	type ErrorComponentProps,

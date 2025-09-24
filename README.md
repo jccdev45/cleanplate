@@ -1,310 +1,159 @@
-Welcome to your new TanStack app! 
+# Cleanplate — Restaurant Inspections Explorer
 
-# Getting Started
+Cleanplate is an open-source app (Vite + React + TypeScript) built around TanStack libraries that helps you explore, visualize, and interact with restaurant inspection data. The app shows restaurant locations on a map, time-series and aggregate charts, tabular data with sorting/filtering, and per-restaurant inspection details.
 
-To run this application:
+![Cleanplate preview](/og_image.png)
+
+## Quick summary
+
+- Purpose: Browse restaurants, view inspection histories and violations, and explore aggregated metrics (scores, grades, cuisine, borough). Map-centric UI with clustering and charts.
+- Main ideas: file-based routing (TanStack Router), server/client data fetching (route loaders + TanStack Query), component primitives (shadcn/radix + Tailwind), maps (Leaflet), charts (Recharts), and runtime validation (Zod).
+
+## Highlights / features
+
+- Interactive Leaflet map with marker clustering and compact marker DTOs (fast map rendering).
+- Table view with virtualized rows and column definitions powered by TanStack Table and TanStack Virtual.
+- Charts (bar/area/pie) demonstrating aggregated metrics and trends.
+- Per-restaurant detail pages including inspection cards and violations lists.
+- Route loaders and TanStack Query integration for caching, optimistic updates and background refetching.
+- Dark/light theme with `next-themes` + a theme toggle component.
+
+## Tech stack
+
+- Vite + React + TypeScript
+- TanStack Router (file-based routes) and TanStack Query
+- TanStack Table + TanStack Virtual
+- Tailwind CSS (+ tailwind-merge, tailwindcss-animate)
+- shadcn UI + Radix primitives + lucide-react icons
+- Leaflet + react-leaflet + marker clustering
+- Recharts for charts
+- Zod for runtime schema validation
+- Vitest + Testing Library for unit tests
+- Biome for linting/formatting/type checks
+
+## Requirements
+
+- Node.js (or Bun). The repo's CI uses Bun but npm/yarn/pnpm also work locally.
+- Recommended: Node 18+ or the latest Bun release if you prefer Bun.
+
+## Quick start
+
+Install dependencies and run the dev server. Bun is recommended for parity with CI, but npm/yarn/pnpm are supported.
+
+Using Bun (recommended):
 
 ```bash
 bun install
-bunx --bun run start  
+bun run dev
 ```
 
-# Building For Production
-
-To build this application for production:
+Using npm:
 
 ```bash
-bunx --bun run build
+npm install
+npm run dev
 ```
 
-## Testing
+Available scripts (from `package.json`):
 
-This project uses [Vitest](https://vitest.dev/) for testing. You can run the tests with:
+- dev: vite dev --port 3000
+- build: vite build
+- serve: vite preview
+- start: node .output/server/index.mjs
+- test: vitest run
+- lint: biome lint
+- format: biome format
+- check: biome check
+
+Example: run the dev server and tests
 
 ```bash
-bunx --bun run test
+npm run dev
+npm run test
 ```
 
-## Styling
+## Project layout (important files)
 
-This project uses [Tailwind CSS](https://tailwindcss.com/) for styling.
+- `src/routes/` — file-based TanStack routes. Add routes by creating files here; the route tree is generated into `src/routeTree.gen.ts`.
+- `src/router.tsx` — router wiring and top-level providers.
+- `src/integrations/tanstack-query/` — QueryClient provider helpers used across the app.
+- `src/components/` — UI components grouped by feature (map, table, charts, restaurant, layout, shared UI, etc.).
+`src/lib/` — shared helpers: fetch utilities, Socrata integration, constants, theme helpers, etc.
+`src/schema/` — Zod schemas describing external data shapes.
+`src/types/` — TypeScript types derived from schemas and DTOs.
+`src/utils/` — small, pure helpers and view-model utilities (formatters, normalizers, selectors, small transformation functions). Use `utils` for lightweight, side-effect-free helpers; use `lib` for heavier integrations, API clients, and longer-lived services.
 
+If you add UI components, prefer `src/components/ui/` (shadcn-style primitives) and use the `@/` alias for imports (`@/components/...`).
 
-## Linting & Formatting
+## Routing & data fetching patterns
 
-This project uses [Biome](https://biomejs.dev/) for linting and formatting. The following scripts are available:
+- File-based routes live in `src/routes`. Each route can export a `loader` (for server/route-time data loading) and a `component` that reads `useLoaderData()`.
+- Use TanStack Query (`useQuery`, `useMutation`) inside components for client-driven data, background refreshes, and optimistic updates. A central QueryClient is provided by `src/integrations/tanstack-query`.
+- Validate all external responses with Zod. See `src/schema/schema.ts` and `src/types/` for canonical shapes used across the app.
 
+Pattern: route loader + component
+
+1. Route exports a loader that fetches and zod-parses data.
+2. Component reads loader data with `route.useLoaderData()` for SSR/initial load.
+3. For interactive parts (filters, paginated lists), use React Query to fetch/refresh with meaningful cache keys.
+
+## Maps & markers
+
+- Leaflet + react-leaflet is used for map rendering; clustering via `leaflet.markercluster` and `react-leaflet-cluster` improves performance for many markers.
+- Map views use compact marker DTOs (latitude, longitude, a few metadata fields) to keep payloads small.
+
+## Charts & tables
+
+- Charts use Recharts and live under `src/components/charts/`.
+- Tables use TanStack Table + virtualization; see `src/components/table/columns.tsx` for column setup and rendering patterns.
+
+## Testing, linting & typechecking
+
+- Run unit tests: `bun run test` (Vitest + Testing Library). Unit tests live under `src/lib/__tests__` and `src/utils/__tests__`.
+- Lint and format with Biome: `bun run lint` and `bun run format`.
+- Run combined checks: `bun run check` (Biome checks + TypeScript typecheck).
+
+## Adding shadcn components
+
+This repo includes `components.json` and follows shadcn patterns. Use the shadcn CLI to add UI components:
 
 ```bash
-bunx --bun run lint
-bunx --bun run format
-bunx --bun run check
+bunx shadcn@latest add button card input dialog
 ```
 
+## Development tips & conventions
 
-## Shadcn
+- Use named exports for components and utilities.
+- File order within a component: main component → subcomponents → hooks/helpers → static content → types.
+- Always validate external responses with Zod in loaders or fetch helpers.
+- Minimize useEffect; prefer derived state or server-driven logic.
+- Use the `@/` alias for internal imports (configured in `tsconfig.json` + Vite plugin).
 
-Add components using the latest version of [Shadcn](https://ui.shadcn.com/).
+## Deployment
 
-```bash
-pnpx shadcn@latest add button
-```
+- Build: `bun run build`.
+- Preview production build locally: `bun run serve`.
+- `bun run start` is reserved for scenarios where a server entry exists under `.output` (SSR/adapter outputs). Adjust to your host.
 
+## Troubleshooting
 
+- Dev server doesn't start: ensure dependencies installed (`npm install` or `bun install`) and Node/Bun versions match.
+- Type errors after edits: run `bun run check` and fix the reported TypeScript/Biome issues.
+- Map markers missing: ensure Leaflet CSS is loaded (see `index.html` or `src/styles.css`). Check the browser console for errors.
 
-## Routing
-This project uses [TanStack Router](https://tanstack.com/router). The initial setup is a file based router. Which means that the routes are managed as files in `src/routes`.
+## Contributing
 
-### Adding A Route
+- Open issues and PRs are welcome. Keep diffs small and focused.
+- Run checks before opening a PR: `bun run check && bun run lint && bun run test`.
 
-To add a new route to your application just add another a new file in the `./src/routes` directory.
+## Where to look in the codebase
 
-TanStack will automatically generate the content of the route file for you.
+- `src/routes/index.tsx` — landing page and loader examples.
+- `src/routes/map.tsx` — map route and filters.
+- `src/routes/restaurant.$camis.tsx` — restaurant detail route.
+- `src/components/restaurant/restaurant-card.tsx` — restaurant card used across list/map views.
+- `src/components/map/restaurant-map.tsx` — map component (Leaflet + clustering).
 
-Now that you have two routes you can use a `Link` component to navigate between them.
+## License
 
-### Adding Links
-
-To use SPA (Single Page Application) navigation you will need to import the `Link` component from `@tanstack/react-router`.
-
-```tsx
-import { Link } from "@tanstack/react-router";
-```
-
-Then anywhere in your JSX you can use it like so:
-
-```tsx
-<Link to="/about">About</Link>
-```
-
-This will create a link that will navigate to the `/about` route.
-
-More information on the `Link` component can be found in the [Link documentation](https://tanstack.com/router/v1/docs/framework/react/api/router/linkComponent).
-
-### Using A Layout
-
-In the File Based Routing setup the layout is located in `src/routes/__root.tsx`. Anything you add to the root route will appear in all the routes. The route content will appear in the JSX where you use the `<Outlet />` component.
-
-Here is an example layout that includes a header:
-
-```tsx
-import { Outlet, createRootRoute } from '@tanstack/react-router'
-import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
-
-import { Link } from "@tanstack/react-router";
-
-export const Route = createRootRoute({
-  component: () => (
-    <>
-      <header>
-        <nav>
-          <Link to="/">Home</Link>
-          <Link to="/about">About</Link>
-        </nav>
-      </header>
-      <Outlet />
-      <TanStackRouterDevtools />
-    </>
-  ),
-})
-```
-
-The `<TanStackRouterDevtools />` component is not required so you can remove it if you don't want it in your layout.
-
-More information on layouts can be found in the [Layouts documentation](https://tanstack.com/router/latest/docs/framework/react/guide/routing-concepts#layouts).
-
-
-## Data Fetching
-
-There are multiple ways to fetch data in your application. You can use TanStack Query to fetch data from a server. But you can also use the `loader` functionality built into TanStack Router to load the data for a route before it's rendered.
-
-For example:
-
-```tsx
-const peopleRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: "/people",
-  loader: async () => {
-    const response = await fetch("https://swapi.dev/api/people");
-    return response.json() as Promise<{
-      results: {
-        name: string;
-      }[];
-    }>;
-  },
-  component: () => {
-    const data = peopleRoute.useLoaderData();
-    return (
-      <ul>
-        {data.results.map((person) => (
-          <li key={person.name}>{person.name}</li>
-        ))}
-      </ul>
-    );
-  },
-});
-```
-
-Loaders simplify your data fetching logic dramatically. Check out more information in the [Loader documentation](https://tanstack.com/router/latest/docs/framework/react/guide/data-loading#loader-parameters).
-
-### React-Query
-
-React-Query is an excellent addition or alternative to route loading and integrating it into you application is a breeze.
-
-First add your dependencies:
-
-```bash
-bun install @tanstack/react-query @tanstack/react-query-devtools
-```
-
-Next we'll need to create a query client and provider. We recommend putting those in `main.tsx`.
-
-```tsx
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-
-// ...
-
-const queryClient = new QueryClient();
-
-// ...
-
-if (!rootElement.innerHTML) {
-  const root = ReactDOM.createRoot(rootElement);
-
-  root.render(
-    <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
-    </QueryClientProvider>
-  );
-}
-```
-
-You can also add TanStack Query Devtools to the root route (optional).
-
-```tsx
-import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-
-const rootRoute = createRootRoute({
-  component: () => (
-    <>
-      <Outlet />
-      <ReactQueryDevtools buttonPosition="top-right" />
-      <TanStackRouterDevtools />
-    </>
-  ),
-});
-```
-
-Now you can use `useQuery` to fetch your data.
-
-```tsx
-import { useQuery } from "@tanstack/react-query";
-
-import "./App.css";
-
-function App() {
-  const { data } = useQuery({
-    queryKey: ["people"],
-    queryFn: () =>
-      fetch("https://swapi.dev/api/people")
-        .then((res) => res.json())
-        .then((data) => data.results as { name: string }[]),
-    initialData: [],
-  });
-
-  return (
-    <div>
-      <ul>
-        {data.map((person) => (
-          <li key={person.name}>{person.name}</li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-
-export default App;
-```
-
-You can find out everything you need to know on how to use React-Query in the [React-Query documentation](https://tanstack.com/query/latest/docs/framework/react/overview).
-
-## State Management
-
-Another common requirement for React applications is state management. There are many options for state management in React. TanStack Store provides a great starting point for your project.
-
-First you need to add TanStack Store as a dependency:
-
-```bash
-bun install @tanstack/store
-```
-
-Now let's create a simple counter in the `src/App.tsx` file as a demonstration.
-
-```tsx
-import { useStore } from "@tanstack/react-store";
-import { Store } from "@tanstack/store";
-import "./App.css";
-
-const countStore = new Store(0);
-
-function App() {
-  const count = useStore(countStore);
-  return (
-    <div>
-      <button onClick={() => countStore.setState((n) => n + 1)}>
-        Increment - {count}
-      </button>
-    </div>
-  );
-}
-
-export default App;
-```
-
-One of the many nice features of TanStack Store is the ability to derive state from other state. That derived state will update when the base state updates.
-
-Let's check this out by doubling the count using derived state.
-
-```tsx
-import { useStore } from "@tanstack/react-store";
-import { Store, Derived } from "@tanstack/store";
-import "./App.css";
-
-const countStore = new Store(0);
-
-const doubledStore = new Derived({
-  fn: () => countStore.state * 2,
-  deps: [countStore],
-});
-doubledStore.mount();
-
-function App() {
-  const count = useStore(countStore);
-  const doubledCount = useStore(doubledStore);
-
-  return (
-    <div>
-      <button onClick={() => countStore.setState((n) => n + 1)}>
-        Increment - {count}
-      </button>
-      <div>Doubled - {doubledCount}</div>
-    </div>
-  );
-}
-
-export default App;
-```
-
-We use the `Derived` class to create a new store that is derived from another store. The `Derived` class has a `mount` method that will start the derived store updating.
-
-Once we've created the derived store we can use it in the `App` component just like we would any other store using the `useStore` hook.
-
-You can find out everything you need to know on how to use TanStack Store in the [TanStack Store documentation](https://tanstack.com/store/latest).
-
-# Demo files
-
-Files prefixed with `demo` can be safely deleted. They are there to provide a starting point for you to play around with the features you've installed.
-
-# Learn More
-
-You can learn more about all of the offerings from TanStack in the [TanStack documentation](https://tanstack.com).
+Licensed under the [MIT license](https://github.com/jccdev45/cleanplate/blob/main/LICENSE.md).

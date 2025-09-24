@@ -3,17 +3,27 @@ import { DefaultLoader } from "@/components/layout/default-loader";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { restaurantQueries } from "@/queries/restaurant";
 import type { Restaurant } from "@/types/restaurant";
+import { seo } from "@/utils/seo";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
+
+const SITE_URL = process.env.SITE_URL ?? "";
 import React from "react";
 
 export const Route = createFileRoute("/chart/_chart-layout/grade")({
-	// TODO: Add `head` for metadata
 	loader: async ({ context }) => {
 		await context.queryClient.ensureQueryData(
 			restaurantQueries.gradeDistribution(),
 		);
 	},
+	head: () => ({
+		meta: seo({
+			title: "Grade Distribution",
+			description: "Distribution of restaurant letter grades (A/B/C/P/Z/N/A).",
+			image: SITE_URL ? `${SITE_URL}/chart-grade.png` : undefined,
+			url: SITE_URL ? `${SITE_URL}/chart/grade` : undefined,
+		}),
+	}),
 	component: GradeRoute,
 });
 

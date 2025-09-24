@@ -1,16 +1,26 @@
 import { StatsStrip } from "@/components/landing/stats-strip";
 import { DefaultLoader } from "@/components/layout/default-loader";
 import { restaurantQueries } from "@/queries/restaurant";
+import { seo } from "@/utils/seo";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 
+const SITE_URL = process.env.SITE_URL ?? "";
+
 export const Route = createFileRoute("/chart/_chart-layout/")({
-	// TODO: Add `head` for metadata
 	loader: async ({ context }) => {
 		await context.queryClient.ensureQueryData(
 			restaurantQueries.dashboardStats(),
 		);
 	},
+	head: () => ({
+		meta: seo({
+			title: "Dashboard",
+			description: "Restaurant data dashboard.",
+			image: SITE_URL ? `${SITE_URL}/chart-index.png` : undefined,
+			url: SITE_URL ? `${SITE_URL}/chart` : undefined,
+		}),
+	}),
 	component: RouteComponent,
 });
 

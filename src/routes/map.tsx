@@ -51,8 +51,9 @@ export const Route = createFileRoute("/map")({
 			title: "Map",
 			description:
 				"Interactive map of NYC restaurant inspection results. Filter by grade, borough, and inspection date.",
+			// Use the map screenshot for the map route
 			image: SITE_URL
-				? `${SITE_URL}/images/chinatown.jpg`
+				? `${SITE_URL}/map.png`
 				: "https://placehold.co/1200x630/0f172a/ffffff?font=roboto&text=Map",
 			url: SITE_URL ? `${SITE_URL}/map` : undefined,
 		}),

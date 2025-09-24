@@ -65,8 +65,9 @@ export const Route = createFileRoute("/")({
 			...seo({
 				title: "Explore NYC restaurant inspections",
 				description: SITE_DEFAULT_DESCRIPTION,
+				// Use the site-wide OG image for the homepage
 				image: SITE_URL
-					? `${SITE_URL}/images/sidewalk-dining.jpg`
+					? `${SITE_URL}/og_image.png`
 					: "https://placehold.co/1200x630/0f172a/ffffff?font=roboto&text=CleanPlate",
 				url: SITE_URL ? `${SITE_URL}/` : undefined,
 			}),

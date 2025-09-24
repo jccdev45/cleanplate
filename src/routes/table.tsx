@@ -39,8 +39,9 @@ export const Route = createFileRoute("/table")({
 			title: "Table",
 			description:
 				"Browse the full dataset of NYC restaurant inspections in a searchable table. Filter and export results.",
+			// Use the table screenshot for the table route
 			image: SITE_URL
-				? `${SITE_URL}/images/nathans.jpg`
+				? `${SITE_URL}/table.png`
 				: "https://placehold.co/1200x630/0f172a/ffffff?font=roboto&text=Table",
 			url: SITE_URL ? `${SITE_URL}/table` : undefined,
 		}),

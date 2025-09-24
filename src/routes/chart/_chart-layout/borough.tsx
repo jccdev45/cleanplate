@@ -2,17 +2,27 @@ import { BoroughBarChart } from "@/components/charts/borough-bar-chart";
 import { DefaultLoader } from "@/components/layout/default-loader";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { restaurantQueries } from "@/queries/restaurant";
+import { seo } from "@/utils/seo";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
+
+const SITE_URL = process.env.SITE_URL ?? "";
 import { useMemo } from "react";
 
 export const Route = createFileRoute("/chart/_chart-layout/borough")({
-	// TODO: Add `head` for metadata
 	loader: async ({ context }) => {
 		await context.queryClient.ensureQueryData(
 			restaurantQueries.boroughCounts(),
 		);
 	},
+	head: () => ({
+		meta: seo({
+			title: "Borough Counts",
+			description: "Counts of restaurants by NYC borough.",
+			image: SITE_URL ? `${SITE_URL}/chart-borough.png` : undefined,
+			url: SITE_URL ? `${SITE_URL}/chart/borough` : undefined,
+		}),
+	}),
 	component: BoroughRoute,
 });
 

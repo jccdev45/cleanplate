@@ -3,17 +3,28 @@ import { DefaultLoader } from "@/components/layout/default-loader";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { restaurantQueries } from "@/queries/restaurant";
 import type { Restaurant } from "@/types/restaurant";
+import { seo } from "@/utils/seo";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
+
+const SITE_URL = process.env.SITE_URL ?? "";
 import React from "react";
 
 export const Route = createFileRoute("/chart/_chart-layout/critical")({
-	// TODO: Add `head` for metadata
 	loader: async ({ context }) => {
 		await context.queryClient.ensureQueryData(
 			restaurantQueries.criticalFlagDistribution(),
 		);
 	},
+	head: () => ({
+		meta: seo({
+			title: "Critical Flags",
+			description:
+				"Distribution of critical (sanitary) flags across inspections.",
+			image: SITE_URL ? `${SITE_URL}/chart-critical.png` : undefined,
+			url: SITE_URL ? `${SITE_URL}/chart/critical` : undefined,
+		}),
+	}),
 	component: CriticalRoute,
 });
 

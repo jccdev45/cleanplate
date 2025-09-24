@@ -10,7 +10,8 @@ import {
 export const SITE_NAME = "CleanPlate";
 export const SITE_DEFAULT_DESCRIPTION =
 	"Explore NYC restaurant inspection results, grades, and inspection history. Search by name, cuisine, or location.";
-export const SITE_DEFAULT_OG_IMAGE = "/logo512.png";
+// Use the newly created OG image for the site-wide default (homepage)
+export const SITE_DEFAULT_OG_IMAGE = "/og_image.png";
 
 export const HERO_IMAGES = [
 	{

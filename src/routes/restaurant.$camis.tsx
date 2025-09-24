@@ -13,10 +13,7 @@ import {
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-	SITE_DEFAULT_DESCRIPTION,
-	SITE_DEFAULT_OG_IMAGE,
-} from "@/lib/constants";
+import { SITE_DEFAULT_DESCRIPTION } from "@/lib/constants";
 import { restaurantQueries } from "@/queries/restaurant";
 import type { Restaurant } from "@/types/restaurant";
 import {
@@ -52,9 +49,8 @@ export const Route = createFileRoute("/restaurant/$camis")({
 		const url = SITE_URL ? `${SITE_URL}/restaurant/${params.camis}` : undefined;
 
 		const placeholder = `https://placehold.co/1200x630/0f172a/ffffff?font=roboto&text=${d?.dba?.[0] ?? "R"}`;
-		const image = SITE_URL
-			? `${SITE_URL}${SITE_DEFAULT_OG_IMAGE}`
-			: placeholder;
+		// Use a plain restaurant detail screenshot for restaurant pages
+		const image = SITE_URL ? `${SITE_URL}/restaurant-detail.png` : placeholder;
 
 		return {
 			meta: seo({ title, description, image, url }),

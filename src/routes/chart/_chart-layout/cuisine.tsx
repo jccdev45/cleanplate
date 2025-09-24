@@ -2,17 +2,27 @@ import { CuisineBarChart } from "@/components/charts/cuisine-bar-chart";
 import { DefaultLoader } from "@/components/layout/default-loader";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { restaurantQueries } from "@/queries/restaurant";
+import { seo } from "@/utils/seo";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
+
+const SITE_URL = process.env.SITE_URL ?? "";
 import React from "react";
 
 export const Route = createFileRoute("/chart/_chart-layout/cuisine")({
-	// TODO: Add `head` for metadata
 	loader: async ({ context }) => {
 		await context.queryClient.ensureQueryData(
 			restaurantQueries.cuisineCounts({ topN: 100 }),
 		);
 	},
+	head: () => ({
+		meta: seo({
+			title: "Cuisine Counts",
+			description: "Counts of restaurants by cuisine type (top cuisines).",
+			image: SITE_URL ? `${SITE_URL}/chart-cuisine-count.png` : undefined,
+			url: SITE_URL ? `${SITE_URL}/chart/cuisine` : undefined,
+		}),
+	}),
 	component: CuisineRoute,
 });
 

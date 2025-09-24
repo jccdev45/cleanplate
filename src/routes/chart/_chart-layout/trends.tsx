@@ -2,12 +2,11 @@ import { CuisineTrendsAreaChart } from "@/components/charts/cuisine-trends-area-
 import { DefaultLoader } from "@/components/layout/default-loader";
 import { GenericErrorComponent } from "@/components/shared/generic-error";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { SITE_URL } from "@/lib/constants";
 import { restaurantQueries } from "@/queries/restaurant";
 import { seo } from "@/utils/seo";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-
-const SITE_URL = process.env.SITE_URL ?? "";
 
 export const Route = createFileRoute("/chart/_chart-layout/trends")({
 	loader: async ({ context }) => {

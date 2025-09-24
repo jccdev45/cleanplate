@@ -14,11 +14,12 @@ import { GenericErrorComponent } from "@/components/shared/generic-error";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card } from "@/components/ui/card";
 import {
+	FEATURE_ITEMS,
 	HERO_IMAGES,
 	SITE_DEFAULT_DESCRIPTION,
+	SITE_URL,
 	TESTIMONIALS,
 } from "@/lib/constants";
-import { FEATURE_ITEMS } from "@/lib/constants";
 import { restaurantQueries } from "@/queries/restaurant";
 import { seo } from "@/utils/seo";
 import {
@@ -28,7 +29,7 @@ import {
 import { useLoaderData } from "@tanstack/react-router";
 import { MapIcon, XCircleIcon } from "lucide-react";
 
-const SITE_URL = process.env.SITE_URL ?? "";
+// SITE_URL is provided from the shared constants.
 
 export const Route = createFileRoute("/")({
 	loader: async ({ context }) => {
@@ -161,6 +162,7 @@ function App() {
 								<Avatar>
 									<AvatarImage
 										src={`https://placehold.co/100?text=${testimonial.imageInitial}`}
+										alt={testimonial.author}
 									/>
 									<AvatarFallback>{testimonial.fallback}</AvatarFallback>
 								</Avatar>

@@ -7,6 +7,7 @@ import {
 	SITE_DEFAULT_DESCRIPTION,
 	SITE_DEFAULT_OG_IMAGE,
 	SITE_NAME,
+	SITE_URL,
 } from "@/lib/constants";
 // Hybrid: server provides initial theme (cookie) and client ScriptOnce uses it to avoid FOUC
 import { getThemeServerFn } from "@/lib/theme";
@@ -20,8 +21,6 @@ import {
 } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 import { Analytics } from "@vercel/analytics/react";
-
-const SITE_URL = process.env.SITE_URL ?? "";
 
 interface MyRouterContext {
 	queryClient: QueryClient;

@@ -14,6 +14,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SITE_DEFAULT_DESCRIPTION } from "@/lib/constants";
+import { SITE_URL } from "@/lib/constants";
 import { restaurantQueries } from "@/queries/restaurant";
 import type { Restaurant } from "@/types/restaurant";
 import {
@@ -29,8 +30,6 @@ import { seo } from "@/utils/seo";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { ExternalLinkIcon, MapPinnedIcon, XCircleIcon } from "lucide-react";
-
-const SITE_URL = process.env.SITE_URL ?? "";
 
 export const Route = createFileRoute("/restaurant/$camis")({
 	component: RouteComponent,

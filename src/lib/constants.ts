@@ -117,3 +117,13 @@ export const FEATURE_ITEMS = [
 			"Search, filter, and explore restaurants with a clean, modern interface.",
 	},
 ];
+
+// Compute a canonical SITE_URL used for building absolute URLs in meta tags.
+// Prefer an explicit SITE_URL env var; fall back to Vercel's VERCEL_URL when
+// available. Ensure the value includes a protocol and has no trailing slash.
+const rawSiteUrl = process.env.SITE_URL ?? process.env.VERCEL_URL ?? "";
+export const SITE_URL = rawSiteUrl
+	? rawSiteUrl.match(/^https?:\/\//)
+		? rawSiteUrl.replace(/\/+$/, "")
+		: `https://${rawSiteUrl.replace(/\/+$/, "")}`
+	: "";

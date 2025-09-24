@@ -5,6 +5,7 @@ import {
 	SidebarProvider,
 	SidebarTrigger,
 } from "@/components/ui/sidebar";
+import { SITE_URL } from "@/lib/constants";
 import getSidebarStateServerFn from "@/lib/sidebar";
 import { seo } from "@/utils/seo";
 import {
@@ -12,8 +13,6 @@ import {
 	Outlet,
 	createFileRoute,
 } from "@tanstack/react-router";
-
-const SITE_URL = process.env.SITE_URL ?? "";
 
 // Make this file the pathless layout for the `/chart` route so it wraps
 // the `index` and child routes under `/chart/*` via the Outlet.

@@ -1,11 +1,10 @@
 import { StatsStrip } from "@/components/landing/stats-strip";
 import { DefaultLoader } from "@/components/layout/default-loader";
+import { SITE_URL } from "@/lib/constants";
 import { restaurantQueries } from "@/queries/restaurant";
 import { seo } from "@/utils/seo";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-
-const SITE_URL = process.env.SITE_URL ?? "";
 
 export const Route = createFileRoute("/chart/_chart-layout/")({
 	loader: async ({ context }) => {

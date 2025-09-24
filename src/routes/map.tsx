@@ -7,6 +7,7 @@ import { DismissibleAlert } from "@/components/shared/dismissible-alert";
 import { GenericErrorComponent } from "@/components/shared/generic-error";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { SITE_URL } from "@/lib/constants";
 import { restaurantQueries } from "@/queries/restaurant";
 import {
 	GRADES,
@@ -23,8 +24,6 @@ import {
 import { XCircleIcon } from "lucide-react";
 import { Loader2 } from "lucide-react";
 import React, { Suspense } from "react";
-
-const SITE_URL = process.env.SITE_URL ?? "";
 
 export const Route = createFileRoute("/map")({
 	validateSearch: (search) => restaurantSearchParamsSchema.parse(search),

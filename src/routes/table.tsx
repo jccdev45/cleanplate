@@ -4,20 +4,17 @@ import { GenericErrorComponent } from "@/components/shared/generic-error";
 import { columns } from "@/components/table/columns";
 import { DataTable } from "@/components/table/data-table";
 import { Input } from "@/components/ui/input";
+import { SITE_URL } from "@/lib/constants";
 import { restaurantQueries } from "@/queries/restaurant";
 import { restaurantSearchParamsSchema } from "@/schema/schema";
 import type { Restaurant } from "@/types/restaurant";
 import { seo } from "@/utils/seo";
 import { useSuspenseInfiniteQuery } from "@tanstack/react-query";
-import {
-	type ErrorComponentProps,
-	createFileRoute,
-} from "@tanstack/react-router";
+import type { ErrorComponentProps } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { XCircleIcon } from "lucide-react";
 import { useState } from "react";
 import { useDebounceCallback } from "usehooks-ts";
-
-const SITE_URL = process.env.SITE_URL ?? "";
 
 export const Route = createFileRoute("/table")({
 	validateSearch: (search) => restaurantSearchParamsSchema.parse(search),

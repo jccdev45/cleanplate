@@ -1,13 +1,12 @@
 import { CriticalFlagPieChart } from "@/components/charts/critical-flag-pie-chart";
 import { DefaultLoader } from "@/components/layout/default-loader";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { SITE_URL } from "@/lib/constants";
 import { restaurantQueries } from "@/queries/restaurant";
 import type { Restaurant } from "@/types/restaurant";
 import { seo } from "@/utils/seo";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-
-const SITE_URL = process.env.SITE_URL ?? "";
 import React from "react";
 
 export const Route = createFileRoute("/chart/_chart-layout/critical")({

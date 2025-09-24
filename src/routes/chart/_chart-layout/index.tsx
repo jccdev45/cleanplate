@@ -28,7 +28,6 @@ type DashboardStats = {
 	avgScore?: number | null;
 	totalCuisines?: number;
 	pctGradeA?: number;
-	pctCritical?: number;
 	topCuisines?: Array<{ cuisine: string; count?: number }>;
 };
 
@@ -38,20 +37,18 @@ function RouteComponent() {
 	);
 	if (isLoading) return <DefaultLoader text="Loading chart data..." />;
 
-	// server shape: { totalRestaurants, avgScore, totalCuisines, pctGradeA, pctCritical, topCuisines }
 	const stats = (data as unknown as DashboardStats) ?? {};
 	const totalRestaurants = stats.totalRestaurants;
 	const avgScore = stats.avgScore;
 	const totalCuisines = stats.totalCuisines;
 	const pctGradeA = stats.pctGradeA;
-	const pctCritical = stats.pctCritical;
 	const topCuisines = stats.topCuisines;
 
 	return (
 		<section className="">
 			<div className="text-center mb-6">
-				<h1 className="text-2xl font-bold">Restaurant Data Dashboard</h1>
-				<p className="text-sm text-muted-foreground">Overview and charts</p>
+				<h1 className="text-2xl font-bold">Charts Dashboard</h1>
+				<p className="text-sm text-muted-foreground">Overview</p>
 			</div>
 
 			<StatsStrip
@@ -61,7 +58,6 @@ function RouteComponent() {
 					pctGradeA?.toFixed ? pctGradeA.toFixed(1) : (pctGradeA ?? "0.0")
 				}
 				totalRestaurants={totalRestaurants}
-				percentageCritical={pctCritical}
 				topCuisines={topCuisines ?? []}
 			/>
 

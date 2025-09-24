@@ -34,10 +34,10 @@ function ChartLayout() {
 
 	return (
 		<SidebarProvider defaultOpen={defaultOpen}>
-			<div className="min-h-screen flex container mx-auto">
+			<div className="min-h-screen flex container mx-auto px-2">
 				<ChartSidebar />
 				<SidebarInset className="flex-1">
-					<SidebarTrigger />
+					<SidebarTrigger className="block sm:hidden" />
 					<div className="mx-auto p-4 w-full sm:p-0">
 						<Outlet />
 					</div>

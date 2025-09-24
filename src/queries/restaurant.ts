@@ -358,8 +358,6 @@ export const restaurantQueries = {
 					: null;
 				const pctGradeA =
 					totalRestaurants > 0 ? (gradeACount / totalRestaurants) * 100 : 0;
-				const pctCritical =
-					totalRestaurants > 0 ? (critCount / totalRestaurants) * 100 : 0;
 				const topCuisines = Array.from(cuisineSet)
 					.slice(0, opts?.topCuisines ?? 5)
 					.map((c) => ({ cuisine: c, count: 0 }));
@@ -368,7 +366,6 @@ export const restaurantQueries = {
 					avgScore,
 					totalCuisines: cuisineSet.size,
 					pctGradeA,
-					pctCritical,
 					topCuisines,
 				} as const;
 			},

@@ -1,3 +1,4 @@
+import { LimitFilter } from "@/components/filters/limit-filter";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,6 +23,7 @@ import {
 	ArrowDownNarrowWide,
 	ArrowUpNarrowWide,
 	CircleQuestionMark,
+	CircleQuestionMarkIcon,
 	FilterIcon,
 } from "lucide-react";
 import { useState } from "react";
@@ -40,20 +42,52 @@ const GRADE_OPTIONS: { label: string; grade?: string }[] = [
 	{ label: "A", grade: "A" },
 	{ label: "B", grade: "B" },
 	{ label: "C", grade: "C" },
+	{ label: "P", grade: "P" },
+	{ label: "Z", grade: "Z" },
 	{ label: "All", grade: undefined },
-];
-
-const LIMIT_OPTIONS: { label: string; limit: number }[] = [
-	{ label: "Low", limit: 1000 },
-	{ label: "Medium", limit: 5000 },
-	{ label: "High", limit: 10000 },
 ];
 
 // GradeFilter component
 function GradeFilter({ value }: { value?: string }) {
 	return (
 		<div className="flex flex-col gap-2">
-			<Label className="font-semibold mb-1">Grade:</Label>
+			<div className="flex items-center gap-2">
+				<Label className="font-semibold mb-1">Grade:</Label>
+				<Tooltip>
+					<TooltipTrigger>
+						<CircleQuestionMarkIcon className="size-4" />
+					</TooltipTrigger>
+					<TooltipContent>
+						<div className="text-balance">
+							<ul className="list-disc ml-4 space-y-1">
+								<li>
+									<strong>A</strong> — 0 to 13 points for sanitary violations —
+									indicates excellent compliance.
+								</li>
+								<li>
+									<strong>B</strong> — 14 to 27 points for sanitary violations —
+									indicates satisfactory compliance.
+								</li>
+								<li>
+									<strong>C</strong> — 28 to 40 points for sanitary violations —
+									indicates marginal compliance.
+								</li>
+								<li>
+									<strong>Z</strong> — Grade Pending
+								</li>
+								<li>
+									<strong>P</strong> — Grade Pending issued on re-opening
+									following an initial inspection that resulted in a closure
+								</li>
+								<li>
+									<strong>N</strong> — Not Yet Graded — Establishment has not
+									yet received its first inspection and grade.
+								</li>
+							</ul>
+						</div>
+					</TooltipContent>
+				</Tooltip>
+			</div>
 			<div className="flex gap-2">
 				{GRADE_OPTIONS.map(({ label, grade }) => (
 					<Link
@@ -66,47 +100,6 @@ function GradeFilter({ value }: { value?: string }) {
 					</Link>
 				))}
 			</div>
-		</div>
-	);
-}
-
-// LimitFilter component
-function LimitFilter({ value }: { value?: string }) {
-	return (
-		<div className="flex flex-col gap-2">
-			<div className="flex items-center gap-2 mb-1">
-				<Label className="font-semibold">Density:</Label>
-				<Tooltip>
-					<TooltipTrigger>
-						<CircleQuestionMark className="size-4" />
-					</TooltipTrigger>
-					<TooltipContent>
-						<p className="text-balance">
-							Density controls how many restaurants are requested for the map.
-							Lower density shows fewer markers and improves performance; higher
-							density increases coverage but may slow loading.
-						</p>
-					</TooltipContent>
-				</Tooltip>
-			</div>
-
-			<RadioGroup defaultValue={value || "1000"} className="flex gap-2">
-				{LIMIT_OPTIONS.map(({ label, limit }) => (
-					<div className="flex items-center gap-1" key={limit}>
-						<Link
-							className="flex items-center space-x-2"
-							to="/map"
-							search={(prev) => ({ ...prev, $limit: limit })}
-						>
-							<RadioGroupItem
-								value={limit.toString()}
-								id={`${label}-${limit}`}
-							/>
-						</Link>
-						<Label htmlFor={`${label}-${limit}`}>{label}</Label>
-					</div>
-				))}
-			</RadioGroup>
 		</div>
 	);
 }
@@ -160,7 +153,9 @@ export function MapFilters() {
 							</div>
 						</div>
 						<GradeFilter value={searchParams?.grade} />
-						<LimitFilter value={searchParams?.$limit?.toString()} />
+						<div className="flex flex-col gap-2">
+							<LimitFilter value={searchParams?.$limit?.toString()} asLinks />
+						</div>
 						<div className="flex flex-col gap-2">
 							<Label className="font-semibold mb-1">Borough:</Label>
 							<div className="flex gap-2 flex-wrap">

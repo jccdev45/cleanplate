@@ -59,10 +59,10 @@ export const columns: ColumnDef<Restaurant>[] = [
 		accessorKey: undefined,
 		header: ({ column }) => {
 			const gradeExplanations = {
-				A: "Grade A",
-				B: "Grade B",
-				C: "Grade C",
-				N: "Not Yet Graded",
+				A: "0 to 13 points for sanitary violations — indicates excellent compliance.",
+				B: "14 to 27 points for sanitary violations — indicates satisfactory compliance.",
+				C: "28 to 40 points for sanitary violations — indicates marginal compliance.",
+				N: "Not Yet Graded - Establishment has not yet received its first inspection and grade.",
 				P: "Grade Pending issued on re-opening",
 				Z: "Grade Pending",
 			};
@@ -88,7 +88,7 @@ export const columns: ColumnDef<Restaurant>[] = [
 		},
 		accessorFn: (row) => row.inspections[0]?.grade,
 		cell: ({ getValue }) => getValue() ?? "--",
-		size: 80,
+		size: 100,
 	},
 	{
 		accessorKey: "violation_description",
@@ -114,6 +114,7 @@ export const columns: ColumnDef<Restaurant>[] = [
 										to="/restaurant/$camis"
 										params={{ camis: row.original.camis }}
 										className="text-secondary hover:underline block ml-auto font-bold w-fit"
+										preloadDelay={100}
 									>
 										See More
 									</Link>

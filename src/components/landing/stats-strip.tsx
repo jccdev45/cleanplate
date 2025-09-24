@@ -11,7 +11,6 @@ export function StatsStrip({
 	totalCuisines = 0,
 	percentageGradeA = "0.0",
 	totalRestaurants,
-	percentageCritical,
 	topCuisines = [],
 }: {
 	avgScore?: string | number | null;
@@ -67,23 +66,6 @@ export function StatsStrip({
 				<CardContent>
 					<div className="text-2xl font-semibold text-primary">
 						{totalRestaurants ?? "N/A"}
-					</div>
-				</CardContent>
-			</Card>
-
-			<Card className="w-40">
-				<CardHeader>
-					<CardTitle className="text-lg">Critical</CardTitle>
-					<CardDescription className="text-xs">
-						% with critical issues
-					</CardDescription>
-				</CardHeader>
-				<CardContent>
-					<div className="text-2xl font-semibold text-primary">
-						{typeof percentageCritical === "number"
-							? percentageCritical.toFixed(1)
-							: String(percentageCritical ?? "0.0")}
-						%
 					</div>
 				</CardContent>
 			</Card>

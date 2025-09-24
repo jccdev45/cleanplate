@@ -8,9 +8,14 @@ import { createFileRoute } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/chart/_chart-layout/")({
 	loader: async ({ context }) => {
-		await context.queryClient.ensureQueryData(
-			restaurantQueries.dashboardStats(),
-		);
+		try {
+			await context.queryClient.ensureQueryData(
+				restaurantQueries.dashboardStats(),
+			);
+		} catch (error) {
+			console.error("Prefetch failed for /table loader", error);
+			return { remoteDown: true };
+		}
 	},
 	head: () => ({
 		meta: seo({
@@ -61,18 +66,11 @@ function RouteComponent() {
 				topCuisines={topCuisines ?? []}
 			/>
 
-			<div className="mt-6 max-w-3xl mx-auto text-sm text-muted-foreground">
-				<p>
-					This dashboard surfaces high-level statistics computed from the NYC
-					inspections dataset. Use the charts below to explore how inspections
-					vary across boroughs, cuisines, and time.
-				</p>
-				<p className="mt-3">
-					Quick tips: use the filters on the map page to narrow by year or
-					neighborhood, or open a restaurant card to view inspection history and
-					violations.
-				</p>
-			</div>
+			<p className="mt-6 max-w-3xl mx-auto text-sm text-muted-foreground">
+				This dashboard surfaces high-level statistics computed from the NYC
+				inspections dataset. Use the charts in the sidebar to explore how
+				inspections vary across boroughs, cuisines, and time.
+			</p>
 		</section>
 	);
 }

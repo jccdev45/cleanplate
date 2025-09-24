@@ -31,7 +31,7 @@ export function ChartSidebar() {
 		<Sidebar className="bg-transparent">
 			<SidebarHeader>
 				<div className="font-bold">Charts</div>
-				<SidebarTrigger className="ml-auto" />
+				<SidebarTrigger className="ml-auto block sm:hidden" />
 			</SidebarHeader>
 
 			<SidebarContent>

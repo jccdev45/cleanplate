@@ -14,8 +14,6 @@ import {
 
 export const Route = createFileRoute("/chart/_chart-layout")({
 	loader: async () => {
-		// read the sidebar cookie on the server and return it so the layout
-		// can use it as defaultOpen to avoid client-only effects.
 		const val = await getSidebarStateServerFn();
 		return { defaultOpen: val };
 	},
@@ -37,7 +35,7 @@ function ChartLayout() {
 			<div className="min-h-screen flex container mx-auto px-2">
 				<ChartSidebar />
 				<SidebarInset className="flex-1">
-					<SidebarTrigger className="block sm:hidden" />
+					<SidebarTrigger className="" />
 					<div className="mx-auto p-4 w-full sm:p-0">
 						<Outlet />
 					</div>

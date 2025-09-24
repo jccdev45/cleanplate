@@ -68,6 +68,9 @@ function TableRoute() {
 	const [zipcode, setZipcode] = useState<string | undefined>(
 		searchParams?.zipcode ? String(searchParams.zipcode) : undefined,
 	);
+	const [limit, setLimit] = useState<number | undefined>(
+		searchParams?.$limit ? Number(searchParams.$limit) : undefined,
+	);
 
 	// Debounced navigation helpers (use useDebounceFn so we can avoid effects)
 	const debouncedNavigateQuery = useDebounceCallback((q: string) => {
@@ -91,6 +94,12 @@ function TableRoute() {
 		},
 		350,
 	);
+
+	const debouncedNavigateLimit = useDebounceCallback((val?: number) => {
+		navigate({
+			search: (prev) => ({ ...(prev || {}), $limit: val ?? undefined }),
+		});
+	}, 350);
 
 	const { data, isLoading, isError } = useSuspenseInfiniteQuery(
 		restaurantQueries.infiniteList(searchParams),
@@ -128,7 +137,7 @@ function TableRoute() {
 					setQuery(v);
 					debouncedNavigateQuery(v);
 				}}
-				placeholder="Search (server-side) — restaurants, zipcode, borough..."
+				placeholder="Search restaurants, zipcode, borough..."
 				type="text"
 				className="w-full"
 			/>
@@ -137,19 +146,27 @@ function TableRoute() {
 				columns={columns}
 				data={restaurants}
 				totalCount={totalCount}
-				filters={{ boro, grade: grade ? grade.split(",") : undefined, zipcode }}
+				filters={{
+					boro,
+					grade: grade ? grade.split(",") : undefined,
+					zipcode,
+					limit,
+				}}
 				onFiltersChange={(next) => {
 					const nextBoro = next.boro ?? undefined;
 					const nextGrade = next.grade ? next.grade.join(",") : undefined;
 					const nextZip = next.zipcode ?? undefined;
+					const nextLimit = next.limit ?? undefined;
 					setBoro(nextBoro);
 					setGrade(nextGrade);
 					setZipcode(nextZip);
+					setLimit(nextLimit);
 					debouncedNavigateFilters({
 						boro: nextBoro,
 						grade: nextGrade,
 						zipcode: nextZip,
 					});
+					debouncedNavigateLimit(nextLimit);
 				}}
 			/>
 		</div>

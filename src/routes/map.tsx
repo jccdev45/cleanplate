@@ -1,12 +1,9 @@
-// TODO: Add cuisine filter (must figure out how to dynamically retrieve list of cuisines first)
-
 import { DefaultLoader } from "@/components/layout/default-loader";
 import { MapFilters } from "@/components/map/map-filters";
 import { RestaurantMap } from "@/components/map/restaurant-map";
 import { DismissibleAlert } from "@/components/shared/dismissible-alert";
 import { GenericErrorComponent } from "@/components/shared/generic-error";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { SITE_URL } from "@/lib/constants";
 import { restaurantQueries } from "@/queries/restaurant";
 import {
@@ -69,7 +66,6 @@ export const Route = createFileRoute("/map")({
 
 function MapPage() {
 	const searchParams = Route.useSearch();
-	const navigate = Route.useNavigate();
 
 	// Memoize the normalized search params so the query key is stable
 	// across renders. This prevents unnecessary refetches when the object
@@ -96,24 +92,9 @@ function MapPage() {
 		<div className="flex flex-col h-[calc(100vh-64px)]">
 			{/* Informational alert with quick action to increase density */}
 			<div className="px-4">
-				<DismissibleAlert
-					title="Map density"
-					action={
-						<Button
-							size="sm"
-							variant="outline"
-							onClick={() =>
-								navigate({
-									search: (prev) => ({ ...(prev || {}), $limit: 5000 }),
-								})
-							}
-						>
-							Increase density
-						</Button>
-					}
-				>
+				<DismissibleAlert title="Map density">
 					Showing a subset of results by default improves performance. Increase
-					density to see more markers.
+					density in the map filters to see more markers.
 				</DismissibleAlert>
 			</div>
 			<div className="flex items-center px-4">
@@ -239,5 +220,3 @@ function MapPage() {
 		);
 	}
 }
-
-// MapErrorComponent removed — use shared GenericErrorComponent via route config

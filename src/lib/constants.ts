@@ -119,9 +119,13 @@ export const FEATURE_ITEMS = [
 ];
 
 // Compute a canonical SITE_URL used for building absolute URLs in meta tags.
-// Prefer an explicit SITE_URL env var; fall back to Vercel's VERCEL_URL when
-// available. Ensure the value includes a protocol and has no trailing slash.
-const rawSiteUrl = process.env.SITE_URL ?? process.env.VERCEL_URL ?? "";
+// Prefer an explicit SITE_URL env var. As a fallback only use Vercel's
+// VERCEL_URL when we're running in a production Vercel deployment
+// (VERCEL_ENV === 'production'). This avoids accidentally exposing
+// preview/deploy-preview domains as the canonical site URL.
+const maybeVercel =
+	process.env.VERCEL_ENV === "production" ? process.env.VERCEL_URL : "";
+const rawSiteUrl = process.env.SITE_URL ?? maybeVercel ?? "";
 export const SITE_URL = rawSiteUrl
 	? rawSiteUrl.match(/^https?:\/\//)
 		? rawSiteUrl.replace(/\/+$/, "")

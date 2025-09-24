@@ -2,6 +2,7 @@ import {
 	SITE_DEFAULT_DESCRIPTION,
 	SITE_DEFAULT_OG_IMAGE,
 	SITE_NAME,
+	SITE_URL,
 } from "@/lib/constants";
 
 type SeoOpts = {
@@ -14,24 +15,15 @@ type SeoOpts = {
 export function seo({ title, description, image, url }: SeoOpts) {
 	const fullTitle = title ? `${title} | ${SITE_NAME}` : SITE_NAME;
 	const desc = description ?? SITE_DEFAULT_DESCRIPTION;
-	// Compute a site URL. If SITE_URL is explicitly provided in the env use it,
-	// otherwise fall back to Vercel's VERCEL_URL (available during builds and
-	// serverless invocations). This helps produce absolute URLs for OG images
-	// without requiring an env var to be manually set in every environment.
-	const rawSiteUrl = process.env.SITE_URL ?? process.env.VERCEL_URL ?? "";
-	const siteUrl = rawSiteUrl
-		? // If VERCEL_URL is provided it usually lacks protocol, so ensure it has one
-			rawSiteUrl.match(/^https?:\/\//)
-			? rawSiteUrl.replace(/\/+$/, "")
-			: `https://${rawSiteUrl.replace(/\/+$/, "")}`
-		: "";
-
+	// Use SITE_URL from constants which centralizes env handling. If SITE_URL
+	// is blank we'll fall back to the site-default image path so environments
+	// without an explicit URL (local dev, preview builds) still work.
 	let img = image ?? SITE_DEFAULT_OG_IMAGE;
-	if (siteUrl) {
+	if (SITE_URL) {
 		if (img.startsWith("/")) {
-			img = `${siteUrl}${img}`;
+			img = `${SITE_URL}${img}`;
 		} else if (!/^https?:\/\//i.test(img)) {
-			img = `${siteUrl}/${img.replace(/^\/+/, "")}`;
+			img = `${SITE_URL}/${img.replace(/^\/+/, "")}`;
 		}
 	}
 

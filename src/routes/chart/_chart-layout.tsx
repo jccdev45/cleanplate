@@ -5,17 +5,13 @@ import {
 	SidebarProvider,
 	SidebarTrigger,
 } from "@/components/ui/sidebar";
-import { SITE_URL } from "@/lib/constants";
 import getSidebarStateServerFn from "@/lib/sidebar";
-import { seo } from "@/utils/seo";
 import {
 	type ErrorComponentProps,
 	Outlet,
 	createFileRoute,
 } from "@tanstack/react-router";
 
-// Make this file the pathless layout for the `/chart` route so it wraps
-// the `index` and child routes under `/chart/*` via the Outlet.
 export const Route = createFileRoute("/chart/_chart-layout")({
 	loader: async () => {
 		// read the sidebar cookie on the server and return it so the layout
@@ -23,20 +19,6 @@ export const Route = createFileRoute("/chart/_chart-layout")({
 		const val = await getSidebarStateServerFn();
 		return { defaultOpen: val };
 	},
-	head: () => ({
-		meta: seo({
-			title: "Charts",
-			description:
-				"Visual dashboard for NYC restaurant inspection trends by borough, cuisine, and score.",
-			image: SITE_URL
-				? `${SITE_URL}/images/cosmic-diner.jpg`
-				: "https://placehold.co/1200x630/0f172a/ffffff?font=roboto&text=Charts",
-			url: SITE_URL ? `${SITE_URL}/chart` : undefined,
-		}),
-		links: [
-			...(SITE_URL ? [{ rel: "canonical", href: `${SITE_URL}/chart` }] : []),
-		],
-	}),
 
 	errorComponent: (props: ErrorComponentProps) => (
 		<GenericErrorComponent {...props} title="charts" />
@@ -44,7 +26,6 @@ export const Route = createFileRoute("/chart/_chart-layout")({
 	component: ChartLayout,
 });
 
-// Pathless layout component used by chart overview and child routes.
 function ChartLayout() {
 	const loaderData = Route.useLoaderData() as
 		| { defaultOpen?: boolean }

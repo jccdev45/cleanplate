@@ -18,7 +18,7 @@ export const Route = createFileRoute("/chart/_chart-layout/trends")({
 		meta: seo({
 			title: "Trends",
 			description: "Cuisine trends over time.",
-			image: SITE_URL ? `${SITE_URL}/images/cosmic-diner.jpg` : undefined,
+			image: SITE_URL ? `${SITE_URL}/chart-cuisine-trend.png` : undefined,
 			url: SITE_URL ? `${SITE_URL}/chart/trends` : undefined,
 		}),
 	}),
